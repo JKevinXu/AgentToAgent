@@ -25,22 +25,29 @@ def handle_request_evaluation(params):
     price = params.get("price", 0)
     name = params.get("name", "Item")
 
-    # Query all buyers
+    # Define buyers
+    buyers = [
+        {"agent": buyer, "name": "buyer1", "display": "Budget Buyer"},
+        {"agent": buyer2, "name": "buyer2", "display": "Conservative Buyer"},
+        {"agent": browser_buyer, "name": "browser_buyer", "display": "Web Research Buyer"}
+    ]
+
     evaluations = []
+    logs = []
 
-    # Buyer 1
-    response = seller.send_message(buyer, "evaluate_listing", {"price": price})
-    evaluations.append({"buyer": "buyer1", "result": response.result})
+    for b in buyers:
+        logs.append(f"Seller querying {b['display']} for {name} at ${price}")
+        response = seller.send_message(b['agent'], "evaluate_listing", {"name": name, "price": price})
+        logs.append(f"{b['display']} responded: {response.result['decision']}")
+        evaluations.append({
+            "buyer": b['name'],
+            "display_name": b['display'],
+            "result": response.result
+        })
 
-    # Buyer 2
-    response = seller.send_message(buyer2, "evaluate_listing", {"price": price})
-    evaluations.append({"buyer": "buyer2", "result": response.result})
+    return {"evaluations": evaluations, "logs": logs}
 
-    # Browser Buyer
-    response = seller.send_message(browser_buyer, "evaluate_listing", {"name": name, "price": price})
-    evaluations.append({"buyer": "browser_buyer", "result": response.result})
 
-    return {"evaluations": evaluations}
 
 
 

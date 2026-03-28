@@ -32,8 +32,32 @@
     <button onclick="evaluateLive()">Evaluate with Real Agents</button>
     <div id="result"></div>
 
+    <h3>Agent Logs</h3>
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+        <div>
+            <strong>Buyer 1</strong>
+            <div id="logs-buyer1" style="background: #e3f2fd; padding: 10px; border-radius: 5px; height: 200px; overflow-y: auto; font-family: monospace; font-size: 11px;"></div>
+        </div>
+        <div>
+            <strong>Buyer 2</strong>
+            <div id="logs-buyer2" style="background: #f3e5f5; padding: 10px; border-radius: 5px; height: 200px; overflow-y: auto; font-family: monospace; font-size: 11px;"></div>
+        </div>
+        <div>
+            <strong>Browser Buyer</strong>
+            <div id="logs-browser" style="background: #fff3e0; padding: 10px; border-radius: 5px; height: 200px; overflow-y: auto; font-family: monospace; font-size: 11px;"></div>
+        </div>
+    </div>
+
     <script>
     const API_URL = 'http://localhost:8000';
+    let logs = {buyer1: [], buyer2: [], browser: []};
+
+    function addLog(buyer, message) {
+        const timestamp = new Date().toLocaleTimeString();
+        logs[buyer].push(`[${timestamp}] ${message}`);
+        document.getElementById(`logs-${buyer}`).innerHTML = logs[buyer].join('<br>');
+        document.getElementById(`logs-${buyer}`).scrollTop = document.getElementById(`logs-${buyer}`).scrollHeight;
+    }
 
     async function evaluateLive() {
         const price = parseFloat(document.getElementById('price').value);
@@ -56,6 +80,17 @@
 
             const data = await response.json();
             const evaluations = data.result.evaluations;
+            const serverLogs = data.result.logs || [];
+
+            // Parse and display logs per buyer
+            evaluations.forEach(eval => {
+                const buyerKey = eval.buyer === 'buyer1' ? 'buyer1' :
+                                 eval.buyer === 'buyer2' ? 'buyer2' : 'browser';
+                const displayName = eval.display_name || eval.buyer;
+                addLog(buyerKey, `[${displayName}] Request: ${itemName} at $${price}`);
+                addLog(buyerKey, `Decision: ${eval.result.decision}`);
+                addLog(buyerKey, `Reason: ${eval.result.reason || 'Score: ' + eval.result.score}`);
+            });
 
             let html = '';
             evaluations.forEach(eval => {
@@ -74,6 +109,9 @@
             document.getElementById('result').innerHTML = html;
 
         } catch (error) {
+            addLog('buyer1', `ERROR: ${error.message}`);
+            addLog('buyer2', `ERROR: ${error.message}`);
+            addLog('browser', `ERROR: ${error.message}`);
             document.getElementById('result').innerHTML =
                 '<div class="result reject">Error: Server not running. Start with: python3 a2a_server.py</div>';
         }
