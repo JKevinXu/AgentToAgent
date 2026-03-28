@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>A2A Live Dashboard</title>
+    <style>
+        body { font-family: Arial; max-width: 700px; margin: 50px auto; padding: 20px; }
+        .form-group { margin: 15px 0; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input { width: 100%; padding: 8px; box-sizing: border-box; }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; cursor: pointer; margin-top: 10px; }
+        .result { margin-top: 15px; padding: 15px; border-radius: 5px; }
+        .accept { background: #d4edda; color: #155724; }
+        .reject { background: #f8d7da; color: #721c24; }
+        .maybe { background: #fff3cd; color: #856404; }
+        .loading { color: #666; font-style: italic; }
+    </style>
+</head>
+<body>
+    <h1>🛒 A2A Live Dashboard</h1>
+    <p>Connected to real Python agents via HTTP</p>
+
+    <div class="form-group">
+        <label>Item Name:</label>
+        <input type="text" id="itemName" value="Laptop">
+    </div>
+
+    <div class="form-group">
+        <label>Price ($):</label>
+        <input type="number" id="price" value="80">
+    </div>
+
+    <button onclick="evaluateLive()">Evaluate with Real Agents</button>
+    <div id="result"></div>
+
+    <script>
+    const API_URL = 'http://localhost:8000';
+
+    async function evaluateLive() {
+        const price = parseFloat(document.getElementById('price').value);
+        const itemName = document.getElementById('itemName').value;
+
+        document.getElementById('result').innerHTML = '<div class="loading">Calling real agents...</div>';
+
+        try {
+            // Call buyer agent
+            const response = await fetch(`${API_URL}/agent/buyer`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    jsonrpc: '2.0',
+                    method: 'evaluate_listing',
+                    params: {price: price},
+                    id: '1'
+                })
+            });
+
+            const data = await response.json();
+            const result = data.result;
+
+            let cls = result.decision === 'accept' ? 'accept' :
+                      result.decision === 'reject' ? 'reject' : 'maybe';
+            let icon = result.decision === 'accept' ? '✅' :
+                       result.decision === 'reject' ? '❌' : '🤔';
+
+            document.getElementById('result').innerHTML =
+                `<div class="result ${cls}">
+                    <strong>${icon} ${result.decision.toUpperCase()}</strong><br>
+                    ${itemName} at $${price}: ${result.reason}
+                </div>`;
+        } catch (error) {
+            document.getElementById('result').innerHTML =
+                '<div class="result reject">Error: Server not running. Start with: python3 a2a_server.py</div>';
+        }
+    }
+    </script>
+</body>
+</html>
+

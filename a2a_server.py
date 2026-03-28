@@ -1,9 +1,11 @@
 """A2A HTTP Server - Distributed Agent Communication"""
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from a2a_protocol import A2AMessage, A2AResponse
 from a2a_agents import seller, buyer, buyer2
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for browser access
 
 @app.route('/agent/<agent_name>', methods=['POST'])
 def agent_endpoint(agent_name):
