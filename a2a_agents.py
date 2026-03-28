@@ -1,5 +1,7 @@
 """A2A Protocol Marketplace Agents"""
 from a2a_protocol import A2AAgent
+from browser_buyer import browser_buyer
+
 
 # Seller Agent
 seller = A2AAgent(
@@ -21,6 +23,7 @@ seller.register_capability("get_listings", handle_get_listings)
 def handle_request_evaluation(params):
     """Seller requests evaluation from all buyers"""
     price = params.get("price", 0)
+    name = params.get("name", "Item")
 
     # Query all buyers
     evaluations = []
@@ -33,7 +36,12 @@ def handle_request_evaluation(params):
     response = seller.send_message(buyer2, "evaluate_listing", {"price": price})
     evaluations.append({"buyer": "buyer2", "result": response.result})
 
+    # Browser Buyer
+    response = seller.send_message(browser_buyer, "evaluate_listing", {"name": name, "price": price})
+    evaluations.append({"buyer": "browser_buyer", "result": response.result})
+
     return {"evaluations": evaluations}
+
 
 
 seller.register_capability("request_evaluation", handle_request_evaluation)
