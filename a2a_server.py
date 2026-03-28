@@ -1,11 +1,14 @@
 """A2A HTTP Server - Distributed Agent Communication"""
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from flask_sock import Sock
 from a2a_protocol import A2AMessage, A2AResponse
 from a2a_agents import seller, buyer, buyer2
+import json
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for browser access
+CORS(app)
+sock = Sock(app)
 
 @app.route('/agent/<agent_name>', methods=['POST'])
 def agent_endpoint(agent_name):
@@ -47,6 +50,20 @@ def agent_card(agent_name):
         return jsonify({'error': 'Agent not found'}), 404
 
     return jsonify(agent.get_agent_card())
+
+@sock.route('/ws/evaluate')
+def evaluate_stream(ws):
+    """WebSocket endpoint for streaming evaluation"""
+    from a2a_agents import handle_request_evaluation_stream
+    import time
+    from datetime import datetime
+
+    data = ws.receive()
+    params = json.loads(data)
+
+    # Stream results as they come
+    for result in handle_request_evaluation_stream(params):
+        ws.send(json.dumps(result))
 
 if __name__ == '__main__':
     print("Starting A2A HTTP Server...")

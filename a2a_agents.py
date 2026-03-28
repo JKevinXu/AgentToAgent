@@ -22,6 +22,8 @@ seller.register_capability("get_listings", handle_get_listings)
 
 def handle_request_evaluation(params):
     """Seller requests evaluation from all buyers"""
+    import time
+    from datetime import datetime
     price = params.get("price", 0)
     name = params.get("name", "Item")
 
@@ -33,25 +35,72 @@ def handle_request_evaluation(params):
     ]
 
     evaluations = []
-    logs = []
 
     for b in buyers:
-        logs.append(f"Seller querying {b['display']} for {name} at ${price}")
+        start_time = time.time()
+        start_timestamp = datetime.now().isoformat()
+
         response = seller.send_message(b['agent'], "evaluate_listing", {"name": name, "price": price})
-        logs.append(f"{b['display']} responded: {response.result['decision']}")
+
+        end_timestamp = datetime.now().isoformat()
+        elapsed = round((time.time() - start_time) * 1000)
+
         evaluations.append({
             "buyer": b['name'],
             "display_name": b['display'],
-            "result": response.result
+            "result": response.result,
+            "start_time": start_timestamp,
+            "end_time": end_timestamp,
+            "elapsed_ms": elapsed
         })
 
-    return {"evaluations": evaluations, "logs": logs}
+    return {"evaluations": evaluations}
+
+
 
 
 
 
 
 seller.register_capability("request_evaluation", handle_request_evaluation)
+
+def handle_request_evaluation_stream(params):
+    """Stream evaluation results as they complete"""
+    import time
+    from datetime import datetime
+    price = params.get("price", 0)
+    name = params.get("name", "Item")
+
+    buyers = [
+        {"agent": buyer, "name": "buyer1", "display": "Budget Buyer"},
+        {"agent": buyer2, "name": "buyer2", "display": "Conservative Buyer"},
+        {"agent": browser_buyer, "name": "browser_buyer", "display": "Web Research Buyer"}
+    ]
+
+    for b in buyers:
+        # Send "started" message
+        start_timestamp = datetime.now().isoformat()
+        yield {
+            "type": "started",
+            "buyer": b['name'],
+            "display_name": b['display'],
+            "timestamp": start_timestamp
+        }
+
+        start_time = time.time()
+        response = seller.send_message(b['agent'], "evaluate_listing", {"name": name, "price": price})
+        end_timestamp = datetime.now().isoformat()
+        elapsed = round((time.time() - start_time) * 1000)
+
+        # Send "completed" message
+        yield {
+            "type": "completed",
+            "buyer": b['name'],
+            "display_name": b['display'],
+            "result": response.result,
+            "timestamp": end_timestamp,
+            "elapsed_ms": elapsed
+        }
 
 
 # Buyer Agent

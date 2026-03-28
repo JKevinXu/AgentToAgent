@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>A2A Live Dashboard - WebSocket</title>
+    <style>
+        body { font-family: Arial; max-width: 700px; margin: 50px auto; padding: 20px; }
+        .form-group { margin: 15px 0; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input { width: 100%; padding: 8px; box-sizing: border-box; }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; cursor: pointer; margin-top: 10px; }
+        .result { margin-top: 15px; padding: 15px; border-radius: 5px; }
+        .accept { background: #d4edda; color: #155724; }
+        .reject { background: #f8d7da; color: #721c24; }
+        .maybe { background: #fff3cd; color: #856404; }
+    </style>
+</head>
+<body>
+    <h1>🛒 A2A Live Dashboard (WebSocket)</h1>
+    <p>Real-time streaming updates</p>
+
+    <div class="form-group">
+        <label>Item Name:</label>
+        <input type="text" id="itemName" value="Laptop">
+    </div>
+
+    <div class="form-group">
+        <label>Price ($):</label>
+        <input type="number" id="price" value="80">
+    </div>
+
+    <button onclick="evaluateStream()">Evaluate (Real-time Stream)</button>
+    <div id="result"></div>
+
+    <h3>Agent Logs (Real-time)</h3>
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+        <div>
+            <strong>Budget Buyer</strong>
+            <div id="logs-buyer1" style="background: #e3f2fd; padding: 10px; border-radius: 5px; height: 200px; overflow-y: auto; font-family: monospace; font-size: 11px;"></div>
+        </div>
+        <div>
+            <strong>Conservative Buyer</strong>
+            <div id="logs-buyer2" style="background: #f3e5f5; padding: 10px; border-radius: 5px; height: 200px; overflow-y: auto; font-family: monospace; font-size: 11px;"></div>
+        </div>
+        <div>
+            <strong>Web Research Buyer</strong>
+            <div id="logs-browser" style="background: #fff3e0; padding: 10px; border-radius: 5px; height: 200px; overflow-y: auto; font-family: monospace; font-size: 11px;"></div>
+        </div>
+    </div>
+
+    <script>
+    let logs = {buyer1: [], buyer2: [], browser: []};
+
+    function addLog(buyer, message) {
+        logs[buyer].push(message);
+        document.getElementById(`logs-${buyer}`).innerHTML = logs[buyer].join('<br>');
+        document.getElementById(`logs-${buyer}`).scrollTop = document.getElementById(`logs-${buyer}`).scrollHeight;
+    }
+
+    function evaluateStream() {
+        const price = parseFloat(document.getElementById('price').value);
+        const itemName = document.getElementById('itemName').value;
+
+        const ws = new WebSocket('ws://localhost:8000/ws/evaluate');
+
+        ws.onopen = () => {
+            ws.send(JSON.stringify({price: price, name: itemName}));
+        };
+
+        ws.onmessage = (event) => {
+            const msg = JSON.parse(event.data);
+            const buyerKey = msg.buyer === 'buyer1' ? 'buyer1' : msg.buyer === 'buyer2' ? 'buyer2' : 'browser';
+            const timestamp = new Date(msg.timestamp).toLocaleTimeString() + '.' + new Date(msg.timestamp).getMilliseconds().toString().padStart(3, '0');
+
+            if (msg.type === 'started') {
+                addLog(buyerKey, `[${timestamp}] ${msg.display_name} started...`);
+            } else if (msg.type === 'completed') {
+                addLog(buyerKey, `[${timestamp}] Decision: ${msg.result.decision} (${msg.elapsed_ms}ms)`);
+                addLog(buyerKey, `[${timestamp}] Reason: ${msg.result.reason || 'Score: ' + msg.result.score}`);
+            }
+        };
+    }
+    </script>
+</body>
+</html>

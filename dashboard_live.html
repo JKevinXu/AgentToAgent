@@ -53,7 +53,8 @@
     let logs = {buyer1: [], buyer2: [], browser: []};
 
     function addLog(buyer, message) {
-        const timestamp = new Date().toLocaleTimeString();
+        const now = new Date();
+        const timestamp = now.toLocaleTimeString() + '.' + now.getMilliseconds().toString().padStart(3, '0');
         logs[buyer].push(`[${timestamp}] ${message}`);
         document.getElementById(`logs-${buyer}`).innerHTML = logs[buyer].join('<br>');
         document.getElementById(`logs-${buyer}`).scrollTop = document.getElementById(`logs-${buyer}`).scrollHeight;
@@ -80,16 +81,24 @@
 
             const data = await response.json();
             const evaluations = data.result.evaluations;
-            const serverLogs = data.result.logs || [];
 
-            // Parse and display logs per buyer
+            // Display logs with actual server timestamps
             evaluations.forEach(eval => {
                 const buyerKey = eval.buyer === 'buyer1' ? 'buyer1' :
                                  eval.buyer === 'buyer2' ? 'buyer2' : 'browser';
                 const displayName = eval.display_name || eval.buyer;
-                addLog(buyerKey, `[${displayName}] Request: ${itemName} at $${price}`);
-                addLog(buyerKey, `Decision: ${eval.result.decision}`);
-                addLog(buyerKey, `Reason: ${eval.result.reason || 'Score: ' + eval.result.score}`);
+
+                // Use server timestamps
+                const startTime = new Date(eval.start_time).toLocaleTimeString() + '.' +
+                                  new Date(eval.start_time).getMilliseconds().toString().padStart(3, '0');
+                const endTime = new Date(eval.end_time).toLocaleTimeString() + '.' +
+                                new Date(eval.end_time).getMilliseconds().toString().padStart(3, '0');
+
+                // Log with actual timestamps
+                logs[buyerKey].push(`[${startTime}] Request: ${itemName} at $${price}`);
+                logs[buyerKey].push(`[${endTime}] Decision: ${eval.result.decision} (${eval.elapsed_ms}ms)`);
+                logs[buyerKey].push(`[${endTime}] Reason: ${eval.result.reason || 'Score: ' + eval.result.score}`);
+                document.getElementById(`logs-${buyerKey}`).innerHTML = logs[buyerKey].join('<br>');
             });
 
             let html = '';
