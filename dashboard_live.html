@@ -42,31 +42,37 @@
         document.getElementById('result').innerHTML = '<div class="loading">Calling real agents...</div>';
 
         try {
-            // Call buyer agent
-            const response = await fetch(`${API_URL}/agent/buyer`, {
+            // Call seller agent (seller will query buyer)
+            const response = await fetch(`${API_URL}/agent/seller`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
                     jsonrpc: '2.0',
-                    method: 'evaluate_listing',
+                    method: 'request_evaluation',
                     params: {price: price},
                     id: '1'
                 })
             });
 
             const data = await response.json();
-            const result = data.result;
+            const evaluations = data.result.evaluations;
 
-            let cls = result.decision === 'accept' ? 'accept' :
-                      result.decision === 'reject' ? 'reject' : 'maybe';
-            let icon = result.decision === 'accept' ? '✅' :
-                       result.decision === 'reject' ? '❌' : '🤔';
+            let html = '';
+            evaluations.forEach(eval => {
+                const result = eval.result;
+                let cls = result.decision === 'accept' ? 'accept' :
+                          result.decision === 'reject' ? 'reject' : 'maybe';
+                let icon = result.decision === 'accept' ? '✅' :
+                           result.decision === 'reject' ? '❌' : '🤔';
 
-            document.getElementById('result').innerHTML =
-                `<div class="result ${cls}">
-                    <strong>${icon} ${result.decision.toUpperCase()}</strong><br>
+                html += `<div class="result ${cls}">
+                    <strong>${icon} ${eval.buyer.toUpperCase()}: ${result.decision.toUpperCase()}</strong><br>
                     ${itemName} at $${price}: ${result.reason}
                 </div>`;
+            });
+
+            document.getElementById('result').innerHTML = html;
+
         } catch (error) {
             document.getElementById('result').innerHTML =
                 '<div class="result reject">Error: Server not running. Start with: python3 a2a_server.py</div>';

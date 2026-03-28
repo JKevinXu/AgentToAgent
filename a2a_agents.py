@@ -18,6 +18,27 @@ def handle_get_listings(params):
 
 seller.register_capability("get_listings", handle_get_listings)
 
+def handle_request_evaluation(params):
+    """Seller requests evaluation from all buyers"""
+    price = params.get("price", 0)
+
+    # Query all buyers
+    evaluations = []
+
+    # Buyer 1
+    response = seller.send_message(buyer, "evaluate_listing", {"price": price})
+    evaluations.append({"buyer": "buyer1", "result": response.result})
+
+    # Buyer 2
+    response = seller.send_message(buyer2, "evaluate_listing", {"price": price})
+    evaluations.append({"buyer": "buyer2", "result": response.result})
+
+    return {"evaluations": evaluations}
+
+
+seller.register_capability("request_evaluation", handle_request_evaluation)
+
+
 # Buyer Agent
 buyer = A2AAgent(
     name="buyer",
