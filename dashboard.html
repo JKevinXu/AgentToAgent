@@ -45,28 +45,37 @@
             const budget = parseFloat(document.getElementById('budget').value);
             const itemName = document.getElementById('itemName').value;
 
-            let decision, reason, className;
-
+            // Buyer 1 evaluation
+            let decision1, reason1, className1;
             if (price > budget) {
-                decision = 'reject';
-                reason = `Over budget ($${budget})`;
-                className = 'reject';
+                decision1 = 'reject'; reason1 = `Over budget ($${budget})`; className1 = 'reject';
             } else if (price < budget * 0.6) {
-                decision = 'accept';
-                reason = 'Good deal';
-                className = 'accept';
+                decision1 = 'accept'; reason1 = 'Good deal'; className1 = 'accept';
             } else {
-                decision = 'maybe';
-                reason = 'Fair price';
-                className = 'maybe';
+                decision1 = 'maybe'; reason1 = 'Fair price'; className1 = 'maybe';
             }
 
-            const icon = decision === 'accept' ? '✅' : decision === 'reject' ? '❌' : '🤔';
+            // Buyer 2 evaluation (budget-conscious)
+            let decision2, reason2, className2;
+            if (price > 70) {
+                decision2 = 'reject'; reason2 = 'Too expensive'; className2 = 'reject';
+            } else if (price < 40) {
+                decision2 = 'accept'; reason2 = 'Excellent deal!'; className2 = 'accept';
+            } else {
+                decision2 = 'maybe'; reason2 = 'Acceptable price'; className2 = 'maybe';
+            }
+
+            const icon1 = decision1 === 'accept' ? '✅' : decision1 === 'reject' ? '❌' : '🤔';
+            const icon2 = decision2 === 'accept' ? '✅' : decision2 === 'reject' ? '❌' : '🤔';
 
             document.getElementById('result').innerHTML = `
-                <div class="result ${className}">
-                    <strong>${icon} ${decision.toUpperCase()}</strong><br>
-                    ${itemName} at $${price}: ${reason}
+                <div class="result ${className1}">
+                    <strong>${icon1} BUYER 1: ${decision1.toUpperCase()}</strong><br>
+                    ${itemName} at $${price}: ${reason1}
+                </div>
+                <div class="result ${className2}">
+                    <strong>${icon2} BUYER 2: ${decision2.toUpperCase()}</strong><br>
+                    ${itemName} at $${price}: ${reason2}
                 </div>
             `;
         }
