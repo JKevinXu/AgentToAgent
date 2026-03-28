@@ -59,6 +59,9 @@
         // Buyer 2
         html += evaluateBuyer2(price);
 
+        // Browser Buyer
+        html += evaluateBrowserBuyer(itemName, price);
+
         document.getElementById('result').innerHTML = html;
     }
 
@@ -107,6 +110,35 @@
 
         return '<h3>Buyer 2 (Budget-Conscious)</h3>' +
             '<div class="result ' + cls + '"><strong>' + decision + '</strong><br>' + reason + '</div>';
+    }
+
+    function evaluateBrowserBuyer(itemName, price) {
+        // Simulate browser search
+        const sources = [
+            {site: "Amazon", price: Math.floor(Math.random() * 30) + 70},
+            {site: "eBay", price: Math.floor(Math.random() * 30) + 65},
+            {site: "BestBuy", price: Math.floor(Math.random() * 30) + 75}
+        ];
+        const prices = sources.map(s => s.price);
+        const lowest = Math.min(...prices);
+        const highest = Math.max(...prices);
+        const avg = prices.reduce((a,b) => a+b) / prices.length;
+
+        let score = 0, reasons = [];
+        if (price < lowest) { score += 50; reasons.push('Below all competitors'); }
+        else if (price <= avg) { score += 35; reasons.push('Below average'); }
+        else { reasons.push('Above average'); }
+        score += Math.floor(Math.random() * 31);
+
+        let decision, cls;
+        if (score >= 60) { decision = '✅ ACCEPT'; cls = 'accept'; }
+        else if (score >= 35) { decision = '🤔 MAYBE'; cls = 'maybe'; }
+        else { decision = '❌ REJECT'; cls = 'reject'; }
+
+        return '<h3>Browser Buyer (Multi-Source)</h3>' +
+            '<div class="research">Competitors: $' + lowest + '-$' + highest + ' (avg: $' + avg.toFixed(0) + ')</div>' +
+            '<div class="result ' + cls + '"><strong>' + decision + '</strong> | Score: ' + score + '/100<br>' +
+            reasons.join(', ') + '</div>';
     }
     </script>
 </body>
