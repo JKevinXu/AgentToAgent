@@ -9,6 +9,19 @@ except ImportError:
     USE_REAL = False
     print("Playwright not installed. Using simulation.")
 
+# Global variable to store log callback
+_log_callback = None
+
+def set_log_callback(callback):
+    global _log_callback
+    _log_callback = callback
+
+def browser_log(message):
+    """Log message and send to callback if set"""
+    log(message)
+    if _log_callback:
+        _log_callback(message)
+
 
 # Browser Buyer Agent
 browser_buyer = A2AAgent(
@@ -23,8 +36,10 @@ def search_web(params):
     log(f"[browser_buyer] Searching web for: {item_name}")
 
     if USE_REAL:
+        log(f"[browser_buyer] Starting real web scraping...")
         sources = scrape_prices(item_name)
         if not sources:
+            log("[browser_buyer] Scraping failed, using fallback")
             sources = [
                 {"site": "Amazon", "price": random.randint(70, 100)},
                 {"site": "eBay", "price": random.randint(65, 95)}

@@ -73,6 +73,8 @@
 
             if (msg.type === 'started') {
                 addLog(buyerKey, `[${timestamp}] ${msg.display_name} started...`);
+            } else if (msg.type === 'log') {
+                addLog(buyerKey, `[${timestamp}] ${msg.message}`);
             } else if (msg.type === 'completed') {
                 addLog(buyerKey, `[${timestamp}] Decision: ${msg.result.decision} (${msg.elapsed_ms}ms)`);
                 addLog(buyerKey, `[${timestamp}] Reason: ${msg.result.reason || 'Score: ' + msg.result.score}`);

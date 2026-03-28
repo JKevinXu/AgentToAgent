@@ -68,6 +68,7 @@ def handle_request_evaluation_stream(params):
     """Stream evaluation results as they complete"""
     import time
     from datetime import datetime
+    from browser_buyer import set_log_callback
     price = params.get("price", 0)
     name = params.get("name", "Item")
 
@@ -86,6 +87,11 @@ def handle_request_evaluation_stream(params):
             "display_name": b['display'],
             "timestamp": start_timestamp
         }
+
+        # For browser buyer, send browsing logs
+        if b['name'] == 'browser_buyer':
+            yield {"type": "log", "buyer": b['name'], "message": "Opening browser...", "timestamp": datetime.now().isoformat()}
+            yield {"type": "log", "buyer": b['name'], "message": "Scraping Amazon...", "timestamp": datetime.now().isoformat()}
 
         start_time = time.time()
         response = seller.send_message(b['agent'], "evaluate_listing", {"name": name, "price": price})
