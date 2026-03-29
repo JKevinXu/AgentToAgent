@@ -72,6 +72,15 @@ def handle_request_evaluation_stream(params):
     price = params.get("price", 0)
     name = params.get("name", "Item")
 
+    # Seller started
+    yield {
+        "type": "started",
+        "buyer": "seller",
+        "display_name": "Seller",
+        "timestamp": datetime.now().isoformat()
+    }
+    yield {"type": "log", "buyer": "seller", "message": f"Received evaluation request for {name} at ${price}", "timestamp": datetime.now().isoformat()}
+
     buyers = [
         {"agent": buyer, "name": "buyer1", "display": "Budget Buyer"},
         {"agent": buyer2, "name": "buyer2", "display": "Conservative Buyer"},
@@ -79,6 +88,8 @@ def handle_request_evaluation_stream(params):
     ]
 
     for b in buyers:
+        yield {"type": "log", "buyer": "seller", "message": f"Contacting {b['display']}...", "timestamp": datetime.now().isoformat()}
+
         # Send "started" message
         start_timestamp = datetime.now().isoformat()
         yield {
@@ -116,6 +127,10 @@ def handle_request_evaluation_stream(params):
             "timestamp": end_timestamp,
             "elapsed_ms": elapsed
         }
+
+        yield {"type": "log", "buyer": "seller", "message": f"Received {response.result['decision']} from {b['display']}", "timestamp": datetime.now().isoformat()}
+
+    yield {"type": "log", "buyer": "seller", "message": "All evaluations completed", "timestamp": datetime.now().isoformat()}
 
 
 # Buyer Agent
