@@ -78,6 +78,13 @@
             } else if (msg.type === 'completed') {
                 addLog(buyerKey, `[${timestamp}] Decision: ${msg.result.decision} (${msg.elapsed_ms}ms)`);
                 addLog(buyerKey, `[${timestamp}] Reason: ${msg.result.reason || 'Score: ' + msg.result.score}`);
+
+                // Show products for browser buyer
+                if (msg.buyer === 'browser_buyer' && msg.result.products) {
+                    msg.result.products.forEach(p => {
+                        addLog(buyerKey, `[${timestamp}] ${p.site}: ${p.title || 'Product'} - $${p.price}`);
+                    });
+                }
             }
         };
     }

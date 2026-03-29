@@ -24,9 +24,14 @@ def scrape_amazon_price(product_name):
             if price_elem:
                 price_text = price_elem.inner_text()
                 price = float(re.sub(r'[^\d.]', '', price_text))
-                print(f"[Amazon] Found price: ${price}")
+
+                # Get product title
+                title_elem = page.query_selector('h2 .a-text-normal')
+                title = title_elem.inner_text() if title_elem else "Unknown"
+
+                print(f"[Amazon] Found: {title} - ${price}")
                 browser.close()
-                return {"site": "Amazon", "price": price}
+                return {"site": "Amazon", "price": price, "title": title}
 
             print(f"[Amazon] No price found")
             browser.close()

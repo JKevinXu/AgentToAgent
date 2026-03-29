@@ -99,7 +99,8 @@ def evaluate_with_browser(params):
         "decision": decision,
         "score": score,
         "reasons": reasons,
-        "comparison": comparison
+        "comparison": comparison,
+        "products": search_result["sources"]
     }
 
 browser_buyer.register_capability("evaluate_listing", evaluate_with_browser)

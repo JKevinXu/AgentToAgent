@@ -91,10 +91,19 @@ def handle_request_evaluation_stream(params):
         # For browser buyer, send browsing logs
         if b['name'] == 'browser_buyer':
             yield {"type": "log", "buyer": b['name'], "message": "Opening browser...", "timestamp": datetime.now().isoformat()}
-            yield {"type": "log", "buyer": b['name'], "message": "Scraping Amazon...", "timestamp": datetime.now().isoformat()}
+            yield {"type": "log", "buyer": b['name'], "message": "Navigating to Amazon...", "timestamp": datetime.now().isoformat()}
 
         start_time = time.time()
+
+        # Send progress logs during evaluation
+        if b['name'] == 'browser_buyer':
+            yield {"type": "log", "buyer": b['name'], "message": "Waiting for search results...", "timestamp": datetime.now().isoformat()}
+
         response = seller.send_message(b['agent'], "evaluate_listing", {"name": name, "price": price})
+
+        if b['name'] == 'browser_buyer':
+            yield {"type": "log", "buyer": b['name'], "message": "Extracting prices...", "timestamp": datetime.now().isoformat()}
+            yield {"type": "log", "buyer": b['name'], "message": "Comparing with market data...", "timestamp": datetime.now().isoformat()}
         end_timestamp = datetime.now().isoformat()
         elapsed = round((time.time() - start_time) * 1000)
 
