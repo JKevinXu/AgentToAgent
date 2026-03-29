@@ -68,7 +68,7 @@ def handle_request_evaluation_stream(params):
     """Stream evaluation results as they complete"""
     import time
     from datetime import datetime
-    from browser_buyer import set_log_callback
+    from agents.browser_buyer import set_log_callback
     price = params.get("price", 0)
     name = params.get("name", "Item")
 
