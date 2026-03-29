@@ -1,6 +1,6 @@
 """A2A Protocol Marketplace Agents"""
-from a2a_protocol import A2AAgent
-from browser_buyer import browser_buyer
+from core.a2a_protocol import A2AAgent
+from agents.browser_buyer import browser_buyer
 
 
 # Seller Agent

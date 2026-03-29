@@ -1,9 +1,9 @@
 """Browser-Powered Buyer Agent"""
-from a2a_protocol import A2AAgent, log
+from core.a2a_protocol import A2AAgent, log
 import random
 
 try:
-    from web_scraper import scrape_prices
+    from web.web_scraper import scrape_prices
     USE_REAL = True
 except ImportError:
     USE_REAL = False
@@ -107,7 +107,7 @@ browser_buyer.register_capability("evaluate_listing", evaluate_with_browser)
 
 # Demo
 if __name__ == "__main__":
-    from a2a_agents import seller
+    from agents.a2a_agents import seller
 
     print("=== Browser Buyer Demo ===\n")
 

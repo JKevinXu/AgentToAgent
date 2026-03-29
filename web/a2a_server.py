@@ -2,8 +2,8 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from flask_sock import Sock
-from a2a_protocol import A2AMessage, A2AResponse
-from a2a_agents import seller, buyer, buyer2
+from core.a2a_protocol import A2AMessage, A2AResponse
+from agents.a2a_agents import seller, buyer, buyer2, handle_request_evaluation_stream
 import json
 
 app = Flask(__name__)
@@ -54,7 +54,6 @@ def agent_card(agent_name):
 @sock.route('/ws/evaluate')
 def evaluate_stream(ws):
     """WebSocket endpoint for streaming evaluation"""
-    from a2a_agents import handle_request_evaluation_stream
     import time
     from datetime import datetime
 
