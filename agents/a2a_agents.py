@@ -71,6 +71,8 @@ def handle_request_evaluation_stream(params):
     import time
     from datetime import datetime
     from agents.browser_buyer import set_log_callback
+    import threading
+    import queue
     price = params.get("price", 0)
     name = params.get("name", "Item")
 
@@ -90,48 +92,64 @@ def handle_request_evaluation_stream(params):
         {"agent": strands_buyer_a2a, "name": "strands_buyer", "display": "Strands Buyer"}
     ]
 
-    for b in buyers:
-        yield {"type": "log", "buyer": "seller", "message": f"Contacting {b['display']}...", "timestamp": datetime.now().isoformat()}
+    event_queue = queue.Queue()
 
-        # Send "started" message
-        start_timestamp = datetime.now().isoformat()
-        yield {
-            "type": "started",
-            "buyer": b['name'],
-            "display_name": b['display'],
-            "timestamp": start_timestamp
-        }
+    def evaluate_buyer(b):
+        """Run buyer evaluation in thread"""
+        # Send started
+        event_queue.put({"type": "started", "buyer": b['name'], "display_name": b['display'], "timestamp": datetime.now().isoformat()})
 
-        # For browser buyer, send browsing logs
+        # Send logs
         if b['name'] == 'browser_buyer':
-            yield {"type": "log", "buyer": b['name'], "message": "Opening browser...", "timestamp": datetime.now().isoformat()}
-            yield {"type": "log", "buyer": b['name'], "message": "Navigating to Amazon...", "timestamp": datetime.now().isoformat()}
+            event_queue.put({"type": "log", "buyer": b['name'], "message": "Opening browser...", "timestamp": datetime.now().isoformat()})
+            time.sleep(0.1)
+            event_queue.put({"type": "log", "buyer": b['name'], "message": "Navigating to Amazon...", "timestamp": datetime.now().isoformat()})
+            time.sleep(0.1)
+            event_queue.put({"type": "log", "buyer": b['name'], "message": "Waiting for search results...", "timestamp": datetime.now().isoformat()})
+            time.sleep(0.1)
+
+        if b['name'] == 'strands_buyer':
+            event_queue.put({"type": "log", "buyer": b['name'], "message": "Initializing Strands agent...", "timestamp": datetime.now().isoformat()})
+            time.sleep(0.2)
+            event_queue.put({"type": "log", "buyer": b['name'], "message": "Analyzing listing criteria...", "timestamp": datetime.now().isoformat()})
+            time.sleep(0.2)
+            event_queue.put({"type": "log", "buyer": b['name'], "message": "Running evaluation logic...", "timestamp": datetime.now().isoformat()})
+            time.sleep(0.2)
 
         start_time = time.time()
-
-        # Send progress logs during evaluation
-        if b['name'] == 'browser_buyer':
-            yield {"type": "log", "buyer": b['name'], "message": "Waiting for search results...", "timestamp": datetime.now().isoformat()}
-
         response = seller.send_message(b['agent'], "evaluate_listing", {"name": name, "price": price})
-
-        if b['name'] == 'browser_buyer':
-            yield {"type": "log", "buyer": b['name'], "message": "Extracting prices...", "timestamp": datetime.now().isoformat()}
-            yield {"type": "log", "buyer": b['name'], "message": "Comparing with market data...", "timestamp": datetime.now().isoformat()}
-        end_timestamp = datetime.now().isoformat()
         elapsed = round((time.time() - start_time) * 1000)
 
-        # Send "completed" message
-        yield {
-            "type": "completed",
-            "buyer": b['name'],
-            "display_name": b['display'],
-            "result": response.result,
-            "timestamp": end_timestamp,
-            "elapsed_ms": elapsed
-        }
+        if b['name'] == 'browser_buyer':
+            event_queue.put({"type": "log", "buyer": b['name'], "message": "Extracting prices...", "timestamp": datetime.now().isoformat()})
+            event_queue.put({"type": "log", "buyer": b['name'], "message": "Comparing with market data...", "timestamp": datetime.now().isoformat()})
 
-        yield {"type": "log", "buyer": "seller", "message": f"Received {response.result['decision']} from {b['display']}", "timestamp": datetime.now().isoformat()}
+        # Send completed
+        event_queue.put({"type": "completed", "buyer": b['name'], "display_name": b['display'], "result": response.result, "timestamp": datetime.now().isoformat(), "elapsed_ms": elapsed})
+        event_queue.put({"type": "log", "buyer": "seller", "message": f"Received {response.result['decision']} from {b['display']}", "timestamp": datetime.now().isoformat()})
+
+    # Start all buyers in parallel
+    threads = []
+    for b in buyers:
+        yield {"type": "log", "buyer": "seller", "message": f"Contacting {b['display']}...", "timestamp": datetime.now().isoformat()}
+        t = threading.Thread(target=evaluate_buyer, args=(b,))
+        t.start()
+        threads.append(t)
+
+    # Stream events as they arrive
+    completed = 0
+    while completed < len(buyers):
+        try:
+            event = event_queue.get(timeout=0.05)
+            yield event
+            if event.get("type") == "completed":
+                completed += 1
+        except queue.Empty:
+            continue
+
+    # Wait for all threads
+    for t in threads:
+        t.join()
 
     yield {"type": "log", "buyer": "seller", "message": "All evaluations completed", "timestamp": datetime.now().isoformat()}
 
