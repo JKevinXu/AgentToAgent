@@ -32,7 +32,7 @@
     <div id="result"></div>
 
     <h3>Agent Logs (Real-time)</h3>
-    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px;">
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr; gap: 10px;">
         <div>
             <strong>Seller</strong>
             <div id="logs-seller" style="background: #e8f5e9; padding: 10px; border-radius: 5px; height: 200px; overflow-y: auto; font-family: monospace; font-size: 11px;"></div>
@@ -49,10 +49,14 @@
             <strong>Web Research Buyer</strong>
             <div id="logs-browser" style="background: #fff3e0; padding: 10px; border-radius: 5px; height: 200px; overflow-y: auto; font-family: monospace; font-size: 11px;"></div>
         </div>
+        <div>
+            <strong>Strands Buyer</strong>
+            <div id="logs-strands" style="background: #fce4ec; padding: 10px; border-radius: 5px; height: 200px; overflow-y: auto; font-family: monospace; font-size: 11px;"></div>
+        </div>
     </div>
 
     <script>
-    let logs = {seller: [], buyer1: [], buyer2: [], browser: []};
+    let logs = {seller: [], buyer1: [], buyer2: [], browser: [], strands: []};
 
     function addLog(buyer, message) {
         logs[buyer].push(message);
@@ -72,7 +76,7 @@
 
         ws.onmessage = (event) => {
             const msg = JSON.parse(event.data);
-            const buyerKey = msg.buyer === 'seller' ? 'seller' : msg.buyer === 'buyer1' ? 'buyer1' : msg.buyer === 'buyer2' ? 'buyer2' : 'browser';
+            const buyerKey = msg.buyer === 'seller' ? 'seller' : msg.buyer === 'buyer1' ? 'buyer1' : msg.buyer === 'buyer2' ? 'buyer2' : msg.buyer === 'browser_buyer' ? 'browser' : msg.buyer === 'strands_buyer' ? 'strands' : 'browser';
             const timestamp = new Date(msg.timestamp).toLocaleTimeString() + '.' + new Date(msg.timestamp).getMilliseconds().toString().padStart(3, '0');
 
             if (msg.type === 'started') {

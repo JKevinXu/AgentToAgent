@@ -1,62 +1,55 @@
 """Strands Agent Implementation for A2A Marketplace"""
+try:
+    from strands import Strands
+except ImportError:
+    # Mock Strands for testing
+    class Strands:
+        def __init__(self, name, instructions):
+            self.name = name
+            self.instructions = instructions
+        def tool(self):
+            return lambda f: f
+        def run(self, prompt):
+            return f"{self.name}: {prompt}"
 
-# Note: Strands is not installed, this is a template
-# Install with: pip install strands
+from core.a2a_protocol import A2AAgent
 
-from dataclasses import dataclass
-
-@dataclass
-class MockStrands:
-    """Mock Strands for demonstration"""
-    name: str
-    instructions: str
-
-    def tool(self):
-        def decorator(func):
-            return func
-        return decorator
-
-    def run(self, prompt="", stream=False):
-        return f"{self.name} response"
-
-# Create Strands agents
-seller_agent = MockStrands(
-    name="seller",
-    instructions="You are a seller. List items and confirm sales."
+# Buyer Agent
+buyer_agent = Strands(
+    name="buyer",
+    instructions="You are a buyer agent. Browse listings and evaluate if you want to buy them based on price and value. Budget: $100."
 )
 
-@seller_agent.tool()
-def get_inventory():
-    """Get available items"""
-    return "Laptop: $80, Phone: $50, Tablet: $120"
-
-buyer_agent = MockStrands(
-    name="buyer",
-    instructions="You evaluate items. Budget: $100. Research prices before deciding."
+# A2A wrapper for Strands buyer
+strands_buyer_a2a = A2AAgent(
+    name="strands_buyer",
+    description="Strands-powered buyer agent",
+    capabilities=["evaluate_listing"]
 )
 
 @buyer_agent.tool()
-def evaluate_item(name: str, price: float):
-    """Evaluate if item is worth buying"""
+def browse_listings() -> str:
+    """View available listings"""
+    return "Listings available"
+
+@buyer_agent.tool()
+def evaluate_listing(listing_id: str) -> str:
+    """Evaluate if a listing is worth buying"""
+    return "Evaluation result"
+
+def handle_strands_evaluate(params):
+    """A2A handler that uses Strands buyer agent"""
+    name = params.get("name", "Item")
+    price = params.get("price", 0)
+
+    prompt = f"Evaluate this listing: {name} at ${price}. Should we buy it?"
+    response = buyer_agent.run(prompt)
+
     if price > 100:
-        return f"❌ {name}: Over budget"
+        return {"decision": "reject", "reason": "Over $100 budget"}
     elif price < 60:
-        return f"✅ {name}: Good deal at ${price}"
+        return {"decision": "accept", "reason": "Good deal"}
     else:
-        return f"🤔 {name}: Fair price at ${price}"
+        return {"decision": "maybe", "reason": "Fair price"}
 
-# Demo
-if __name__ == "__main__":
-    print("=== Strands A2A Demo ===\n")
-
-    # Seller lists inventory
-    print("Seller inventory:")
-    print(get_inventory())
-
-    # Buyer evaluates items
-    print("\nBuyer evaluations:")
-    print(evaluate_item("Laptop", 80))
-    print(evaluate_item("Phone", 50))
-    print(evaluate_item("Tablet", 120))
-
-
+strands_buyer_a2a.register_capability("evaluate_listing", handle_strands_evaluate)

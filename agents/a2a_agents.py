@@ -1,6 +1,7 @@
 """A2A Protocol Marketplace Agents"""
 from core.a2a_protocol import A2AAgent
 from agents.browser_buyer import browser_buyer
+from agents.strands_agents import strands_buyer_a2a
 
 
 # Seller Agent
@@ -31,7 +32,8 @@ def handle_request_evaluation(params):
     buyers = [
         {"agent": buyer, "name": "buyer1", "display": "Budget Buyer"},
         {"agent": buyer2, "name": "buyer2", "display": "Conservative Buyer"},
-        {"agent": browser_buyer, "name": "browser_buyer", "display": "Web Research Buyer"}
+        {"agent": browser_buyer, "name": "browser_buyer", "display": "Web Research Buyer"},
+        {"agent": strands_buyer_a2a, "name": "strands_buyer", "display": "Strands Buyer"}
     ]
 
     evaluations = []
@@ -84,7 +86,8 @@ def handle_request_evaluation_stream(params):
     buyers = [
         {"agent": buyer, "name": "buyer1", "display": "Budget Buyer"},
         {"agent": buyer2, "name": "buyer2", "display": "Conservative Buyer"},
-        {"agent": browser_buyer, "name": "browser_buyer", "display": "Web Research Buyer"}
+        {"agent": browser_buyer, "name": "browser_buyer", "display": "Web Research Buyer"},
+        {"agent": strands_buyer_a2a, "name": "strands_buyer", "display": "Strands Buyer"}
     ]
 
     for b in buyers:
