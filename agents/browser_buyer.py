@@ -40,15 +40,17 @@ def search_web(params):
         sources = scrape_prices(item_name)
         if not sources:
             log("[browser_buyer] Scraping failed, using fallback")
+            search_term = item_name.replace(' ', '+')
             sources = [
-                {"site": "Amazon", "price": random.randint(70, 100)},
-                {"site": "eBay", "price": random.randint(65, 95)}
+                {"site": "Amazon", "price": random.randint(70, 100), "url": f"https://www.amazon.com/s?k={search_term}"},
+                {"site": "eBay", "price": random.randint(65, 95), "url": f"https://www.ebay.com/sch/i.html?_nkw={search_term}"}
             ]
     else:
+        search_term = item_name.replace(' ', '+')
         sources = [
-            {"site": "Amazon", "price": random.randint(70, 100)},
-            {"site": "eBay", "price": random.randint(65, 95)},
-            {"site": "BestBuy", "price": random.randint(75, 105)}
+            {"site": "Amazon", "price": random.randint(70, 100), "url": f"https://www.amazon.com/s?k={search_term}"},
+            {"site": "eBay", "price": random.randint(65, 95), "url": f"https://www.ebay.com/sch/i.html?_nkw={search_term}"},
+            {"site": "BestBuy", "price": random.randint(75, 105), "url": f"https://www.bestbuy.com/site/searchpage.jsp?st={search_term}"}
         ]
 
     return {"item": item_name, "sources": sources}

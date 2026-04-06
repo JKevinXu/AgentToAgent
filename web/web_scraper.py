@@ -30,8 +30,11 @@ def scrape_amazon_price(product_name):
                 title = title_elem.inner_text() if title_elem else "Unknown"
 
                 print(f"[Amazon] Found: {title} - ${price}")
+                # Get product link
+                link_elem = page.query_selector('h2 a.a-link-normal')
+                link = "https://www.amazon.com" + link_elem.get_attribute('href') if link_elem else search_url
                 browser.close()
-                return {"site": "Amazon", "price": price, "title": title}
+                return {"site": "Amazon", "price": price, "title": title, "url": link}
 
             print(f"[Amazon] No price found")
             browser.close()
@@ -57,9 +60,12 @@ def scrape_ebay_price(product_name):
             if price_elem:
                 price_text = price_elem.inner_text()
                 price = float(re.sub(r'[^\d.]', '', price_text))
+                # Get product link
+                link_elem = page.query_selector('.s-item__link')
+                link = link_elem.get_attribute('href') if link_elem else search_url
                 print(f"[eBay] Found price: ${price}")
                 browser.close()
-                return {"site": "eBay", "price": price}
+                return {"site": "eBay", "price": price, "url": link}
 
             print(f"[eBay] No price found")
             browser.close()

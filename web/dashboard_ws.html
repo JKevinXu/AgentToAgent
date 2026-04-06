@@ -115,7 +115,7 @@
         buyer1: 'Budget Buyer',
         buyer2: 'Conservative Buyer',
         browser_buyer: 'Web Research Buyer',
-        strands_buyer: 'Strands Buyer (GPT-4.1 Nano)'
+        strands_buyer: 'Strands Buyer (GPT-4.1 Mini + Browser)'
     };
 
     function addLog(buyer, message) {
@@ -143,7 +143,10 @@
             const reasonLines = [];
             if (reason) reasonLines.push(reason);
             if (r.result.products && r.result.products.length > 0) {
-                reasonLines.push(r.result.products.map(p => `${p.site}: $${p.price}`).join(', '));
+                reasonLines.push(r.result.products.map(p => {
+                    if (p.url) return `<a href="${p.url}" target="_blank" style="color:#007bff">${p.site}</a>: $${p.price}`;
+                    return `${p.site}: $${p.price}`;
+                }).join(', '));
             }
 
             row.innerHTML = `
@@ -222,10 +225,11 @@
                 addLog(buyerKey, `[${timestamp}] Decision: ${msg.result.decision} (${msg.elapsed_ms}ms)`);
                 addLog(buyerKey, `[${timestamp}] Reason: ${msg.result.reason || 'Score: ' + msg.result.score}`);
 
-                // Show products for browser buyer
-                if (msg.buyer === 'browser_buyer' && msg.result.products) {
+                // Show products for browser buyer and strands buyer
+                if ((msg.buyer === 'browser_buyer' || msg.buyer === 'strands_buyer') && msg.result.products) {
                     msg.result.products.forEach(p => {
-                        addLog(buyerKey, `[${timestamp}] ${p.site}: ${p.title || 'Product'} - $${p.price}`);
+                        const siteLink = p.url ? `<a href="${p.url}" target="_blank" style="color:#007bff">${p.site}</a>` : p.site;
+                        addLog(buyerKey, `[${timestamp}] ${siteLink}: ${p.title || 'Product'} - $${p.price}`);
                     });
                 }
 

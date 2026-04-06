@@ -1,7 +1,7 @@
 """A2A Protocol Marketplace Agents"""
 from core.a2a_protocol import A2AAgent
 from agents.browser_buyer import browser_buyer
-from agents.strands_agents import strands_buyer_a2a
+from agents.strands_agents import strands_buyer_a2a, set_log_callback as set_strands_log_callback
 
 
 # Seller Agent
@@ -111,10 +111,12 @@ def handle_request_evaluation_stream(params):
         if b['name'] == 'strands_buyer':
             event_queue.put({"type": "log", "buyer": b['name'], "message": "Initializing Strands agent...", "timestamp": datetime.now().isoformat()})
             time.sleep(0.2)
-            event_queue.put({"type": "log", "buyer": b['name'], "message": "Analyzing listing criteria...", "timestamp": datetime.now().isoformat()})
+            event_queue.put({"type": "log", "buyer": b['name'], "message": "Launching headless browser...", "timestamp": datetime.now().isoformat()})
             time.sleep(0.2)
-            event_queue.put({"type": "log", "buyer": b['name'], "message": "Running evaluation logic...", "timestamp": datetime.now().isoformat()})
-            time.sleep(0.2)
+            # Wire up live log callback so tool invocations stream to the dashboard
+            def strands_log_cb(msg):
+                event_queue.put({"type": "log", "buyer": "strands_buyer", "message": msg, "timestamp": datetime.now().isoformat()})
+            set_strands_log_callback(strands_log_cb)
 
         start_time = time.time()
         response = seller.send_message(b['agent'], "evaluate_listing", {"name": name, "price": price})
@@ -123,6 +125,10 @@ def handle_request_evaluation_stream(params):
         if b['name'] == 'browser_buyer':
             event_queue.put({"type": "log", "buyer": b['name'], "message": "Extracting prices...", "timestamp": datetime.now().isoformat()})
             event_queue.put({"type": "log", "buyer": b['name'], "message": "Comparing with market data...", "timestamp": datetime.now().isoformat()})
+
+        if b['name'] == 'strands_buyer':
+            set_strands_log_callback(None)  # clear callback
+            event_queue.put({"type": "log", "buyer": b['name'], "message": "Finalizing decision...", "timestamp": datetime.now().isoformat()})
 
         # Send completed
         event_queue.put({"type": "completed", "buyer": b['name'], "display_name": b['display'], "result": response.result, "timestamp": datetime.now().isoformat(), "elapsed_ms": elapsed})
