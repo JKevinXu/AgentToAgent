@@ -31,9 +31,9 @@ def handle_request_evaluation(params):
 
     # Define buyers
     buyers = [
-        {"agent": buyer, "name": "buyer1", "display": "Buyer 1"},
-        {"agent": buyer2, "name": "buyer2", "display": "Conservative Buyer"},
-        {"agent": browser_buyer, "name": "browser_buyer", "display": "Web Research Buyer"},
+        {"agent": buyer, "name": "buyer1", "display": "Budget Buyer ($150)"},
+        {"agent": buyer2, "name": "buyer2", "display": "Jordan Fan 🏀"},
+
         {"agent": strands_buyer_a2a, "name": "strands_buyer", "display": "Strands Buyer"}
     ]
 
@@ -89,9 +89,9 @@ def handle_request_evaluation_stream(params):
     yield {"type": "log", "buyer": "seller", "message": f"Received evaluation request for {name} at ${price}", "timestamp": datetime.now().isoformat()}
 
     buyers = [
-        {"agent": buyer, "name": "buyer1", "display": "Buyer 1"},
-        {"agent": buyer2, "name": "buyer2", "display": "Conservative Buyer"},
-        {"agent": browser_buyer, "name": "browser_buyer", "display": "Web Research Buyer"},
+        {"agent": buyer, "name": "buyer1", "display": "Budget Buyer ($150)"},
+        {"agent": buyer2, "name": "buyer2", "display": "Jordan Fan 🏀"},
+
         {"agent": strands_buyer_a2a, "name": "strands_buyer", "display": "Strands Buyer"}
     ]
 
@@ -172,35 +172,50 @@ buyer = A2AAgent(
 )
 
 def handle_evaluate(params):
+    BUDGET = 150
     price = params.get("price", 0)
     name = params.get("name", "Item")
     specs = {k: params[k] for k in ("model", "color") if params.get(k)}
     spec_summary = ", ".join(f"{k}: {v}" for k, v in specs.items()) if specs else ""
 
-    reason = f"Listed at ${price} for {name}"
+    desc = f"{name}"
     if spec_summary:
-        reason += f" ({spec_summary})"
-    return {"decision": "buy", "reason": reason}
+        desc += f" ({spec_summary})"
+
+    if price <= BUDGET:
+        return {"decision": "buy", "reason": f"${price} for {desc} is within my ${BUDGET} budget. Good deal!"}
+    else:
+        return {"decision": "not_buy", "reason": f"${price} for {desc} exceeds my ${BUDGET} budget. Too expensive."}
 
 buyer.register_capability("evaluate_listing", handle_evaluate)
 
-# Buyer Agent 2 (Conservative)
+# Buyer Agent 2 (Jordan Fan)
 buyer2 = A2AAgent(
     name="buyer2",
-    description="Conservative buyer agent",
+    description="Crazy Jordan fan buyer agent",
     capabilities=["evaluate_listing"]
 )
 
 def handle_evaluate2(params):
     price = params.get("price", 0)
     name = params.get("name", "Item")
+    model_name = params.get("model", "")
+    color = params.get("color", "")
     specs = {k: params[k] for k in ("model", "color") if params.get(k)}
     spec_summary = ", ".join(f"{k}: {v}" for k, v in specs.items()) if specs else ""
 
-    reason = f"Listed at ${price} for {name}"
+    desc = f"{name}"
     if spec_summary:
-        reason += f" ({spec_summary})"
-    return {"decision": "buy", "reason": reason}
+        desc += f" ({spec_summary})"
+
+    # Check if it's Jordan-related
+    search_text = f"{name} {model_name}".lower()
+    is_jordan = "jordan" in search_text or "aj" in search_text
+
+    if is_jordan:
+        return {"decision": "buy", "reason": f"INSTANT COP! 🔥 {desc} at ${price} — I NEED these Jordans! Take my money!"}
+    else:
+        return {"decision": "not_buy", "reason": f"Not interested in {desc}. I only buy Jordans. 🏀"}
 
 buyer2.register_capability("evaluate_listing", handle_evaluate2)
 

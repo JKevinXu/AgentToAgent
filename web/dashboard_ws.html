@@ -71,26 +71,22 @@
     <div id="result"></div>
 
     <h3>Agent Logs (Real-time)</h3>
-    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr; gap: 10px;">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
         <div>
-            <strong>Seller</strong>
-            <div id="logs-seller" style="background: #e8f5e9; padding: 10px; border-radius: 5px; height: 200px; overflow-y: auto; font-family: monospace; font-size: 11px;"></div>
+            <strong>🏪 Seller</strong>
+            <div id="logs-seller" style="background: #e8f5e9; padding: 12px; border-radius: 8px; height: 250px; overflow-y: auto; font-family: monospace; font-size: 12px;"></div>
         </div>
         <div>
-            <strong>Buyer 1</strong>
-            <div id="logs-buyer1" style="background: #e3f2fd; padding: 10px; border-radius: 5px; height: 200px; overflow-y: auto; font-family: monospace; font-size: 11px;"></div>
+            <strong>💰 Budget Buyer ($150)</strong>
+            <div id="logs-buyer1" style="background: #e3f2fd; padding: 12px; border-radius: 8px; height: 250px; overflow-y: auto; font-family: monospace; font-size: 12px;"></div>
         </div>
         <div>
-            <strong>Conservative Buyer</strong>
-            <div id="logs-buyer2" style="background: #f3e5f5; padding: 10px; border-radius: 5px; height: 200px; overflow-y: auto; font-family: monospace; font-size: 11px;"></div>
+            <strong>🏀 Jordan Fan</strong>
+            <div id="logs-buyer2" style="background: #f3e5f5; padding: 12px; border-radius: 8px; height: 250px; overflow-y: auto; font-family: monospace; font-size: 12px;"></div>
         </div>
         <div>
-            <strong>Web Research Buyer</strong>
-            <div id="logs-browser" style="background: #fff3e0; padding: 10px; border-radius: 5px; height: 200px; overflow-y: auto; font-family: monospace; font-size: 11px;"></div>
-        </div>
-        <div>
-            <strong>Strands Buyer</strong>
-            <div id="logs-strands" style="background: #fce4ec; padding: 10px; border-radius: 5px; height: 200px; overflow-y: auto; font-family: monospace; font-size: 11px;"></div>
+            <strong>🤖 Strands Buyer (LLM)</strong>
+            <div id="logs-strands" style="background: #fce4ec; padding: 12px; border-radius: 8px; height: 250px; overflow-y: auto; font-family: monospace; font-size: 12px;"></div>
         </div>
     </div>
 
@@ -115,14 +111,14 @@
     </div>
 
     <script>
-    let logs = {seller: [], buyer1: [], buyer2: [], browser: [], strands: []};
+    let logs = {seller: [], buyer1: [], buyer2: [], strands: []};
     let evaluationResults = [];
     let totalBuyers = 4;
 
     const displayNames = {
-        buyer1: 'Buyer 1',
-        buyer2: 'Conservative Buyer',
-        browser_buyer: 'Web Research Buyer',
+        buyer1: 'Budget Buyer ($150)',
+        buyer2: 'Jordan Fan 🏀',
+
         strands_buyer: 'Strands Buyer (GPT-4.1 Mini + Browser)'
     };
 
@@ -200,8 +196,8 @@
 
         // Reset state
         evaluationResults = [];
-        logs = {seller: [], buyer1: [], buyer2: [], browser: [], strands: []};
-        ['seller', 'buyer1', 'buyer2', 'browser', 'strands'].forEach(k => {
+        logs = {seller: [], buyer1: [], buyer2: [], strands: []};
+        ['seller', 'buyer1', 'buyer2', 'strands'].forEach(k => {
             document.getElementById(`logs-${k}`).innerHTML = '';
         });
         document.getElementById('results-body').innerHTML = '';
