@@ -26,23 +26,20 @@
         .results-table tr:last-child td { border-bottom: none; }
         .results-table tr:hover td { background: #f1f3f5; }
         .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-        .badge-accept { background: #d4edda; color: #155724; }
-        .badge-reject { background: #f8d7da; color: #721c24; }
-        .badge-maybe { background: #fff3cd; color: #856404; }
+        .badge-buy { background: #d4edda; color: #155724; }
+        .badge-not_buy { background: #f8d7da; color: #721c24; }
         .reason-text { font-size: 13px; color: #555; max-width: 340px; }
         .time-text { font-size: 12px; color: #888; white-space: nowrap; }
         .consensus-bar { display: flex; gap: 6px; margin-top: 12px; align-items: center; }
         .consensus-bar .segment { height: 8px; border-radius: 4px; transition: width 0.4s ease; }
-        .consensus-bar .seg-accept { background: #28a745; }
-        .consensus-bar .seg-reject { background: #dc3545; }
-        .consensus-bar .seg-maybe { background: #ffc107; }
+        .consensus-bar .seg-buy { background: #28a745; }
+        .consensus-bar .seg-not_buy { background: #dc3545; }
         .consensus-label { font-size: 13px; font-weight: 600; margin-left: 10px; }
 
         /* Existing log styles */
         .result { margin-top: 15px; padding: 15px; border-radius: 5px; }
-        .accept { background: #d4edda; color: #155724; }
-        .reject { background: #f8d7da; color: #721c24; }
-        .maybe { background: #fff3cd; color: #856404; }
+        .buy { background: #d4edda; color: #155724; }
+        .not_buy { background: #f8d7da; color: #721c24; }
     </style>
 </head>
 <body>
@@ -59,6 +56,33 @@
         <input type="number" id="price" value="80">
     </div>
 
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div class="form-group">
+            <label>Product Name:</label>
+            <input type="text" id="productName" value="XPS 15 9530" placeholder="e.g. XPS 15 9530, MacBook Pro 14">
+        </div>
+        <div class="form-group">
+            <label>Model:</label>
+            <input type="text" id="model" value="9530" placeholder="e.g. 9530, MK183LL/A">
+        </div>
+        <div class="form-group">
+            <label>Brand:</label>
+            <input type="text" id="brand" value="Dell" placeholder="e.g. Dell, Apple, Lenovo">
+        </div>
+        <div class="form-group">
+            <label>CPU:</label>
+            <input type="text" id="cpu" value="Intel i7-13700H" placeholder="e.g. Intel i7-13700H">
+        </div>
+        <div class="form-group">
+            <label>Memory (GB):</label>
+            <input type="number" id="memory" value="16" placeholder="e.g. 16">
+        </div>
+        <div class="form-group">
+            <label>Graphics Card:</label>
+            <input type="text" id="graphicsCard" value="NVIDIA RTX 4060" placeholder="e.g. NVIDIA RTX 4060">
+        </div>
+    </div>
+
     <button id="evalBtn" onclick="evaluateStream()">Evaluate (Real-time Stream)</button>
     <div id="result"></div>
 
@@ -69,7 +93,7 @@
             <div id="logs-seller" style="background: #e8f5e9; padding: 10px; border-radius: 5px; height: 200px; overflow-y: auto; font-family: monospace; font-size: 11px;"></div>
         </div>
         <div>
-            <strong>Budget Buyer</strong>
+            <strong>Buyer 1</strong>
             <div id="logs-buyer1" style="background: #e3f2fd; padding: 10px; border-radius: 5px; height: 200px; overflow-y: auto; font-family: monospace; font-size: 11px;"></div>
         </div>
         <div>
@@ -112,7 +136,7 @@
     let totalBuyers = 4;
 
     const displayNames = {
-        buyer1: 'Budget Buyer',
+        buyer1: 'Buyer 1',
         buyer2: 'Conservative Buyer',
         browser_buyer: 'Web Research Buyer',
         strands_buyer: 'Strands Buyer (GPT-4.1 Mini + Browser)'
@@ -159,30 +183,27 @@
         });
 
         // Update summary
-        const accepts = evaluationResults.filter(r => r.result.decision === 'accept').length;
-        const rejects = evaluationResults.filter(r => r.result.decision === 'reject').length;
-        const maybes = evaluationResults.filter(r => r.result.decision === 'maybe').length;
+        const buys = evaluationResults.filter(r => r.result.decision === 'buy').length;
+        const notBuys = evaluationResults.filter(r => r.result.decision === 'not_buy').length;
         const total = evaluationResults.length;
 
         document.getElementById('results-summary').textContent =
-            `${total}/${totalBuyers} responded · ${accepts} accept · ${rejects} reject · ${maybes} maybe`;
+            `${total}/${totalBuyers} responded · ${buys} buy · ${notBuys} not buy`;
 
         // Consensus bar
         const bar = document.getElementById('consensus-bar');
         if (total > 0) {
-            const pctAccept = (accepts / total * 100).toFixed(0);
-            const pctReject = (rejects / total * 100).toFixed(0);
-            const pctMaybe = (maybes / total * 100).toFixed(0);
+            const pctBuy = (buys / total * 100).toFixed(0);
+            const pctNotBuy = (notBuys / total * 100).toFixed(0);
 
             let consensus = '';
-            if (accepts > rejects && accepts > maybes) consensus = '✅ Consensus: Buy';
-            else if (rejects > accepts && rejects > maybes) consensus = '❌ Consensus: Pass';
-            else consensus = '🤔 Consensus: Mixed';
+            if (buys > notBuys) consensus = '✅ Consensus: Buy';
+            else if (notBuys > buys) consensus = '❌ Consensus: Not Buy';
+            else consensus = '🤔 Consensus: Split';
 
             bar.innerHTML = `
-                ${accepts ? `<div class="segment seg-accept" style="width: ${pctAccept}%"></div>` : ''}
-                ${maybes ? `<div class="segment seg-maybe" style="width: ${pctMaybe}%"></div>` : ''}
-                ${rejects ? `<div class="segment seg-reject" style="width: ${pctReject}%"></div>` : ''}
+                ${buys ? `<div class="segment seg-buy" style="width: ${pctBuy}%"></div>` : ''}
+                ${notBuys ? `<div class="segment seg-not_buy" style="width: ${pctNotBuy}%"></div>` : ''}
                 <span class="consensus-label">${consensus}</span>
             `;
         }
@@ -209,7 +230,16 @@
         const ws = new WebSocket('ws://localhost:8000/ws/evaluate');
 
         ws.onopen = () => {
-            ws.send(JSON.stringify({price: price, name: itemName}));
+            ws.send(JSON.stringify({
+                name: itemName,
+                price: price,
+                product_name: document.getElementById('productName').value,
+                model: document.getElementById('model').value,
+                brand: document.getElementById('brand').value,
+                cpu: document.getElementById('cpu').value,
+                memory: parseInt(document.getElementById('memory').value) || 0,
+                graphics_card: document.getElementById('graphicsCard').value
+            }));
         };
 
         ws.onmessage = (event) => {

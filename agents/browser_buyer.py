@@ -33,27 +33,30 @@ browser_buyer = A2AAgent(
 def search_web(params):
     """Browser search for product prices"""
     item_name = params.get("name", "")
-    log(f"[browser_buyer] Searching web for: {item_name}")
+    brand = params.get("brand", "")
+    product_name = params.get("product_name", "")
+    search_query = " ".join(filter(None, [brand, product_name, item_name]))
+    log(f"[browser_buyer] Searching web for: {search_query}")
 
     if USE_REAL:
         log(f"[browser_buyer] Starting real web scraping...")
-        sources = scrape_prices(item_name)
+        sources = scrape_prices(search_query)
         if not sources:
             log("[browser_buyer] Scraping failed, using fallback")
-            search_term = item_name.replace(' ', '+')
+            search_term = search_query.replace(' ', '+')
             sources = [
                 {"site": "Amazon", "price": random.randint(70, 100), "url": f"https://www.amazon.com/s?k={search_term}"},
                 {"site": "eBay", "price": random.randint(65, 95), "url": f"https://www.ebay.com/sch/i.html?_nkw={search_term}"}
             ]
     else:
-        search_term = item_name.replace(' ', '+')
+        search_term = search_query.replace(' ', '+')
         sources = [
             {"site": "Amazon", "price": random.randint(70, 100), "url": f"https://www.amazon.com/s?k={search_term}"},
             {"site": "eBay", "price": random.randint(65, 95), "url": f"https://www.ebay.com/sch/i.html?_nkw={search_term}"},
             {"site": "BestBuy", "price": random.randint(75, 105), "url": f"https://www.bestbuy.com/site/searchpage.jsp?st={search_term}"}
         ]
 
-    return {"item": item_name, "sources": sources}
+    return {"item": search_query, "sources": sources}
 
 browser_buyer.register_capability("search_web", search_web)
 
@@ -95,7 +98,7 @@ def evaluate_with_browser(params):
 
     score += random.randint(0, 30)
 
-    decision = "accept" if score >= 60 else "maybe" if score >= 35 else "reject"
+    decision = "buy" if score >= 60 else "not_buy"
 
     return {
         "decision": decision,

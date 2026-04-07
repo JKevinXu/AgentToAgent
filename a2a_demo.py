@@ -15,7 +15,7 @@ def get_inventory() -> str:
 # Buyer Agent with access to seller
 buyer = Strands(
     name="buyer",
-    instructions="You evaluate items to buy. Ask the seller about inventory and evaluate prices. Budget: $100",
+    instructions="You evaluate items to buy. Ask the seller about inventory and evaluate prices.",
 )
 
 @buyer.tool()

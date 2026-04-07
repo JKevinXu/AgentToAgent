@@ -46,37 +46,26 @@ def evaluate_with_research(params):
     score = 0
     reasons = []
 
-    # Price factor (40%)
+    # Price factor (60%)
     price_diff = research["price_vs_market"]
     if price_diff < -20:
-        score += 40; reasons.append("Great price")
+        score += 60; reasons.append("Great price vs market")
     elif price_diff < 0:
-        score += 30; reasons.append("Below market")
+        score += 45; reasons.append("Below market")
     elif price_diff < 10:
-        score += 20; reasons.append("Fair price")
+        score += 30; reasons.append("Fair price")
     else:
         reasons.append("Above market")
 
-    # Budget factor (30%)
-    budget = params.get("budget", 100)
-    if price <= budget * 0.7:
-        score += 30; reasons.append("Within budget")
-    elif price <= budget:
-        score += 20
-    else:
-        reasons.append("Over budget")
-
-    # Urgency/randomness (30%)
-    urgency = random.randint(0, 30)
+    # Urgency/randomness (40%)
+    urgency = random.randint(0, 40)
     score += urgency
 
     # Decision
     if score >= 70:
-        decision = "accept"
-    elif score >= 40:
-        decision = "maybe"
+        decision = "buy"
     else:
-        decision = "reject"
+        decision = "not_buy"
 
     return {
         "decision": decision,
@@ -103,7 +92,7 @@ if __name__ == "__main__":
         result = realistic_buyer.send_message(
             realistic_buyer,
             "evaluate_listing",
-            {"name": item["name"], "price": item["price"], "budget": 100}
+            {"name": item["name"], "price": item["price"]}
         )
         print(f"Decision: {result.result['decision'].upper()}")
         print(f"Score: {result.result['score']}/100")

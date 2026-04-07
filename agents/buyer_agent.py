@@ -4,7 +4,7 @@ from marketplace import marketplace
 
 agent = Strands(
     name="buyer",
-    instructions="You are a buyer agent. Browse listings and evaluate if you want to buy them based on price and value. Budget: $100.",
+    instructions="You are a buyer agent. Browse listings and evaluate if you want to buy them based on price and value.",
 )
 
 @agent.tool()
@@ -22,7 +22,7 @@ def evaluate_listing(listing_id: str) -> str:
 
     # Simple evaluation logic
     if listing.price > 100:
-        return f"❌ {listing.name}: Too expensive (${listing.price} > $100 budget)"
+        return f"❌ {listing.name}: Expensive at ${listing.price}"
     elif listing.price < 60:
         return f"✅ {listing.name}: Good deal at ${listing.price}"
     else:

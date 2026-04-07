@@ -9,9 +9,8 @@
         input { width: 100%; padding: 8px; box-sizing: border-box; }
         button { background: #007bff; color: white; padding: 10px 20px; border: none; cursor: pointer; margin-top: 10px; }
         .result { margin-top: 15px; padding: 15px; border-radius: 5px; }
-        .accept { background: #d4edda; color: #155724; }
-        .reject { background: #f8d7da; color: #721c24; }
-        .maybe { background: #fff3cd; color: #856404; }
+        .buy { background: #d4edda; color: #155724; }
+        .not_buy { background: #f8d7da; color: #721c24; }
         .research { background: #e7f3ff; padding: 10px; margin: 10px 0; border-radius: 5px; font-size: 0.9em; }
     </style>
 </head>
@@ -28,11 +27,6 @@
         <input type="number" id="price" value="80">
     </div>
 
-    <div class="form-group">
-        <label>Buyer Budget ($):</label>
-        <input type="number" id="budget" value="100">
-    </div>
-
     <button onclick="simulateRealistic()">Simulate Realistic Buyer</button>
     <div id="result"></div>
 
@@ -45,16 +39,15 @@
 
     function simulateRealistic() {
         const price = parseFloat(document.getElementById('price').value);
-        const budget = parseFloat(document.getElementById('budget').value);
         const itemName = document.getElementById('itemName').value;
 
         let html = '';
 
         // Realistic Buyer
-        html += evaluateRealistic(itemName, price, budget);
+        html += evaluateRealistic(itemName, price);
 
         // Buyer 1
-        html += evaluateBuyer1(price, budget);
+        html += evaluateBuyer1(price);
 
         // Buyer 2
         html += evaluateBuyer2(price);
@@ -65,26 +58,21 @@
         document.getElementById('result').innerHTML = html;
     }
 
-    function evaluateRealistic(itemName, price, budget) {
+    function evaluateRealistic(itemName, price) {
         const market = marketPrices[itemName] || {avg: price, min: price*0.8, max: price*1.2};
         const priceVsMarket = ((price / market.avg - 1) * 100).toFixed(1);
 
         let score = 0, reasons = [];
-        if (priceVsMarket < -20) { score += 40; reasons.push('Great price'); }
-        else if (priceVsMarket < 0) { score += 30; reasons.push('Below market'); }
-        else if (priceVsMarket < 10) { score += 20; reasons.push('Fair price'); }
+        if (priceVsMarket < -20) { score += 60; reasons.push('Great price vs market'); }
+        else if (priceVsMarket < 0) { score += 45; reasons.push('Below market'); }
+        else if (priceVsMarket < 10) { score += 30; reasons.push('Fair price'); }
         else { reasons.push('Above market'); }
 
-        if (price <= budget * 0.7) { score += 30; reasons.push('Within budget'); }
-        else if (price <= budget) { score += 20; }
-        else { reasons.push('Over budget'); }
-
-        score += Math.floor(Math.random() * 31);
+        score += Math.floor(Math.random() * 41);
 
         let decision, cls;
-        if (score >= 70) { decision = '✅ ACCEPT'; cls = 'accept'; }
-        else if (score >= 40) { decision = '🤔 MAYBE'; cls = 'maybe'; }
-        else { decision = '❌ REJECT'; cls = 'reject'; }
+        if (score >= 70) { decision = '✅ BUY'; cls = 'buy'; }
+        else { decision = '❌ NOT BUY'; cls = 'not_buy'; }
 
         return '<h3>Realistic Buyer (Market Research)</h3>' +
             '<div class="research">Market: $' + market.avg + ' | Price vs Market: ' + priceVsMarket + '%</div>' +
@@ -92,23 +80,23 @@
             reasons.join(', ') + '</div>';
     }
 
-    function evaluateBuyer1(price, budget) {
+    function evaluateBuyer1(price) {
         let decision, reason, cls;
-        if (price > budget) { decision = '❌ REJECT'; reason = 'Over budget'; cls = 'reject'; }
-        else if (price < budget * 0.6) { decision = '✅ ACCEPT'; reason = 'Good deal'; cls = 'accept'; }
-        else { decision = '🤔 MAYBE'; reason = 'Fair price'; cls = 'maybe'; }
+        if (price > 120) { decision = '❌ NOT BUY'; reason = 'Overpriced'; cls = 'not_buy'; }
+        else if (price < 60) { decision = '✅ BUY'; reason = 'Good deal'; cls = 'buy'; }
+        else { decision = '✅ BUY'; reason = 'Fair price'; cls = 'buy'; }
 
-        return '<h3>Buyer 1 (Simple Budget)</h3>' +
+        return '<h3>Buyer 1</h3>' +
             '<div class="result ' + cls + '"><strong>' + decision + '</strong><br>' + reason + '</div>';
     }
 
     function evaluateBuyer2(price) {
         let decision, reason, cls;
-        if (price > 70) { decision = '❌ REJECT'; reason = 'Too expensive'; cls = 'reject'; }
-        else if (price < 40) { decision = '✅ ACCEPT'; reason = 'Excellent deal!'; cls = 'accept'; }
-        else { decision = '🤔 MAYBE'; reason = 'Acceptable price'; cls = 'maybe'; }
+        if (price > 70) { decision = '❌ NOT BUY'; reason = 'Too expensive'; cls = 'not_buy'; }
+        else if (price < 40) { decision = '✅ BUY'; reason = 'Excellent deal!'; cls = 'buy'; }
+        else { decision = '✅ BUY'; reason = 'Acceptable price'; cls = 'buy'; }
 
-        return '<h3>Buyer 2 (Budget-Conscious)</h3>' +
+        return '<h3>Buyer 2 (Conservative)</h3>' +
             '<div class="result ' + cls + '"><strong>' + decision + '</strong><br>' + reason + '</div>';
     }
 
@@ -131,9 +119,8 @@
         score += Math.floor(Math.random() * 31);
 
         let decision, cls;
-        if (score >= 60) { decision = '✅ ACCEPT'; cls = 'accept'; }
-        else if (score >= 35) { decision = '🤔 MAYBE'; cls = 'maybe'; }
-        else { decision = '❌ REJECT'; cls = 'reject'; }
+        if (score >= 60) { decision = '✅ BUY'; cls = 'buy'; }
+        else { decision = '❌ NOT BUY'; cls = 'not_buy'; }
 
         return '<h3>Browser Buyer (Multi-Source)</h3>' +
             '<div class="research">Competitors: $' + lowest + '-$' + highest + ' (avg: $' + avg.toFixed(0) + ')</div>' +

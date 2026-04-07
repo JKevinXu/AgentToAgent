@@ -27,10 +27,11 @@ def handle_request_evaluation(params):
     from datetime import datetime
     price = params.get("price", 0)
     name = params.get("name", "Item")
+    specs = {k: params[k] for k in ("product_name", "model", "brand", "cpu", "memory", "graphics_card") if params.get(k)}
 
     # Define buyers
     buyers = [
-        {"agent": buyer, "name": "buyer1", "display": "Budget Buyer"},
+        {"agent": buyer, "name": "buyer1", "display": "Buyer 1"},
         {"agent": buyer2, "name": "buyer2", "display": "Conservative Buyer"},
         {"agent": browser_buyer, "name": "browser_buyer", "display": "Web Research Buyer"},
         {"agent": strands_buyer_a2a, "name": "strands_buyer", "display": "Strands Buyer"}
@@ -42,7 +43,8 @@ def handle_request_evaluation(params):
         start_time = time.time()
         start_timestamp = datetime.now().isoformat()
 
-        response = seller.send_message(b['agent'], "evaluate_listing", {"name": name, "price": price})
+        eval_params = {"name": name, "price": price, **specs}
+        response = seller.send_message(b['agent'], "evaluate_listing", eval_params)
 
         end_timestamp = datetime.now().isoformat()
         elapsed = round((time.time() - start_time) * 1000)
@@ -75,6 +77,7 @@ def handle_request_evaluation_stream(params):
     import queue
     price = params.get("price", 0)
     name = params.get("name", "Item")
+    specs = {k: params[k] for k in ("product_name", "model", "brand", "cpu", "memory", "graphics_card") if params.get(k)}
 
     # Seller started
     yield {
@@ -86,7 +89,7 @@ def handle_request_evaluation_stream(params):
     yield {"type": "log", "buyer": "seller", "message": f"Received evaluation request for {name} at ${price}", "timestamp": datetime.now().isoformat()}
 
     buyers = [
-        {"agent": buyer, "name": "buyer1", "display": "Budget Buyer"},
+        {"agent": buyer, "name": "buyer1", "display": "Buyer 1"},
         {"agent": buyer2, "name": "buyer2", "display": "Conservative Buyer"},
         {"agent": browser_buyer, "name": "browser_buyer", "display": "Web Research Buyer"},
         {"agent": strands_buyer_a2a, "name": "strands_buyer", "display": "Strands Buyer"}
@@ -119,7 +122,8 @@ def handle_request_evaluation_stream(params):
             set_strands_log_callback(strands_log_cb)
 
         start_time = time.time()
-        response = seller.send_message(b['agent'], "evaluate_listing", {"name": name, "price": price})
+        eval_params = {"name": name, "price": price, **specs}
+        response = seller.send_message(b['agent'], "evaluate_listing", eval_params)
         elapsed = round((time.time() - start_time) * 1000)
 
         if b['name'] == 'browser_buyer':
@@ -169,30 +173,34 @@ buyer = A2AAgent(
 
 def handle_evaluate(params):
     price = params.get("price", 0)
-    if price > 100:
-        return {"decision": "reject", "reason": "Over budget"}
-    elif price < 60:
-        return {"decision": "accept", "reason": "Good deal"}
-    else:
-        return {"decision": "maybe", "reason": "Fair price"}
+    name = params.get("name", "Item")
+    specs = {k: params[k] for k in ("product_name", "model", "brand", "cpu", "memory", "graphics_card") if params.get(k)}
+    spec_summary = ", ".join(f"{k}: {v}" for k, v in specs.items()) if specs else ""
+
+    reason = f"Listed at ${price} for {name}"
+    if spec_summary:
+        reason += f" ({spec_summary})"
+    return {"decision": "buy", "reason": reason}
 
 buyer.register_capability("evaluate_listing", handle_evaluate)
 
-# Buyer Agent 2 (Budget-conscious)
+# Buyer Agent 2 (Conservative)
 buyer2 = A2AAgent(
     name="buyer2",
-    description="Budget-conscious buyer agent",
+    description="Conservative buyer agent",
     capabilities=["evaluate_listing"]
 )
 
 def handle_evaluate2(params):
     price = params.get("price", 0)
-    if price > 70:
-        return {"decision": "reject", "reason": "Too expensive for budget buyer"}
-    elif price < 40:
-        return {"decision": "accept", "reason": "Excellent deal!"}
-    else:
-        return {"decision": "maybe", "reason": "Acceptable price"}
+    name = params.get("name", "Item")
+    specs = {k: params[k] for k in ("product_name", "model", "brand", "cpu", "memory", "graphics_card") if params.get(k)}
+    spec_summary = ", ".join(f"{k}: {v}" for k, v in specs.items()) if specs else ""
+
+    reason = f"Listed at ${price} for {name}"
+    if spec_summary:
+        reason += f" ({spec_summary})"
+    return {"decision": "buy", "reason": reason}
 
 buyer2.register_capability("evaluate_listing", handle_evaluate2)
 

@@ -19,14 +19,13 @@ def init_agents():
 
     def evaluate(params):
         price = params.get("price", 0)
-        budget = params.get("budget", 100)
 
-        if price > budget:
-            return {"decision": "reject", "reason": f"Over budget (${budget})"}
-        elif price < budget * 0.6:
-            return {"decision": "accept", "reason": "Good deal"}
+        if price > 120:
+            return {"decision": "not_buy", "reason": "Overpriced"}
+        elif price < 60:
+            return {"decision": "buy", "reason": "Good deal"}
         else:
-            return {"decision": "maybe", "reason": "Fair price"}
+            return {"decision": "buy", "reason": "Fair price"}
 
     buyer.register_capability("evaluate_listing", evaluate)
     return seller, buyer
@@ -44,21 +43,21 @@ with col1:
     price = st.number_input("Price ($)", min_value=0, value=80)
 
 with col2:
-    buyer_budget = st.number_input("Buyer Budget ($)", min_value=0, value=100)
+    pass
 
 if st.button("Simulate Buyer Evaluation"):
     response = seller.send_message(
         buyer,
         "evaluate_listing",
-        {"price": price, "budget": buyer_budget}
+        {"price": price}
     )
 
     result = response.result
     decision = result["decision"]
 
-    if decision == "accept":
+    if decision == "buy":
         st.success(f"✅ {result['reason']}")
-    elif decision == "reject":
+    elif decision == "not_buy":
         st.error(f"❌ {result['reason']}")
     else:
         st.warning(f"🤔 {result['reason']}")

@@ -119,40 +119,41 @@ _browser_tool_obj._tool_func = _logging_browser_func
 
 
 @tool
-def evaluate_price(item_name: str, price: float, budget: float = 100.0) -> str:
-    """Evaluate if an item's price is worth buying given a budget.
+def evaluate_price(item_name: str, price: float) -> str:
+    """Evaluate if an item's price is worth buying based on market value.
 
     Args:
         item_name: Name of the item to evaluate.
         price: The listed price of the item.
-        budget: Maximum budget available.
 
     Returns:
         A price evaluation summary.
     """
-    _emit_log(f"Evaluating {item_name} at ${price} against ${budget} budget")
-    if price > budget:
-        return f"{item_name} at ${price} exceeds budget of ${budget}"
-    elif price < budget * 0.6:
-        return f"{item_name} at ${price} is a great deal (well under ${budget} budget)"
-    else:
-        return f"{item_name} at ${price} is fairly priced (within ${budget} budget)"
+    _emit_log(f"Evaluating {item_name} at ${price}")
+    return f"{item_name} is listed at ${price}"
 
 
 # Strands buyer agent with LLM + browser
 buyer_agent = Agent(
     model=model,
-    system_prompt="""You are a buyer agent. Budget: $100. Be concise.
+    system_prompt="""You are a human buyer shopping for deals. Be concise.
+
+You want to find the best deal. If the listed price is lower than what you find online, that's a great deal — BUY it.
+Do NOT question whether a low price is "legitimate" or "too good to be true." You are simply comparing prices.
+
+You will receive a listing with a product name, price, and detailed specs (brand, model, CPU, memory, graphics card).
+Use ALL the spec details to build a specific search query — not just the generic item name.
 
 Steps (follow in order):
 1. Call browser: init_session, session_name "price-check", description "Price research"
-2. Call browser: navigate to "https://www.amazon.com/s?k=<item+name>"
+2. Call browser: navigate to Amazon search using the brand, product name, and model — e.g. "https://www.amazon.com/s?k=Dell+XPS+15+9530+i7+16GB"
 3. Call browser: get_text, selector "body" — scan for prices
 4. Call browser: close session
-5. Call evaluate_price with the item name, listed price, budget 100
+5. Call evaluate_price with the item name and listed price
 6. Reply with:
    - One PRODUCT line per competitor found: PRODUCT: Amazon | $<price> | <url>
-   - Your verdict: ACCEPT, REJECT, or MAYBE (one word) with a one-sentence reason.""",
+   - Compare the listed price to the prices you found. If the listed price is equal or lower, say BUY. If higher, say NOT BUY.
+   - Your verdict: BUY or NOT BUY with a one-sentence reason.""",
     tools=[evaluate_price, _browser_instance.browser],
     callback_handler=None,
 )
@@ -169,18 +170,29 @@ def handle_strands_evaluate(params):
     """A2A handler that uses Strands buyer agent with LLM + browser"""
     name = params.get("name", "Item")
     price = params.get("price", 0)
+    specs = {k: params[k] for k in ("product_name", "model", "brand", "cpu", "memory", "graphics_card") if params.get(k)}
+
+    spec_text = ""
+    if specs:
+        spec_lines = [f"  {k}: {v}" for k, v in specs.items()]
+        spec_text = "\nSpecs:\n" + "\n".join(spec_lines)
+
+    # Build a specific search-friendly description
+    search_parts = [specs.get("brand", ""), specs.get("product_name", ""), name]
+    search_label = " ".join(filter(None, dict.fromkeys(search_parts)))  # deduplicate, preserve order
 
     try:
-        result = buyer_agent(f"Evaluate this listing: {name} at ${price}. Should we buy it?")
+        prompt = f"Evaluate this listing: {search_label} at ${price}.{spec_text}\nSearch for this exact product using the brand, model, and specs above. Should we buy it?"
+        result = buyer_agent(prompt)
         response_text = str(result)
 
         lower = response_text.lower()
-        if "reject" in lower or "pass" in lower or "skip" in lower or "no" in lower:
-            decision = "reject"
+        if "reject" in lower or "pass" in lower or "skip" in lower or "not buy" in lower or "don't buy" in lower:
+            decision = "not_buy"
         elif "accept" in lower or "buy" in lower or "yes" in lower:
-            decision = "accept"
+            decision = "buy"
         else:
-            decision = "maybe"
+            decision = "not_buy"
 
         # Parse PRODUCT lines: "PRODUCT: <site> | $<price> | <url>"
         products = []
@@ -201,13 +213,7 @@ def handle_strands_evaluate(params):
             result_dict["products"] = products
         return result_dict
     except Exception as e:
-        # Fallback to rule-based if LLM fails
-        if price > 100:
-            return {"decision": "reject", "reason": f"Over $100 budget (LLM unavailable: {e})"}
-        elif price < 60:
-            return {"decision": "accept", "reason": f"Good deal (LLM unavailable: {e})"}
-        else:
-            return {"decision": "maybe", "reason": f"Fair price (LLM unavailable: {e})"}
+        return {"decision": "not_buy", "reason": f"Unable to evaluate (LLM unavailable: {e})"}
 
 
 strands_buyer_a2a.register_capability("evaluate_listing", handle_strands_evaluate)
