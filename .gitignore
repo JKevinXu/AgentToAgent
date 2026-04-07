@@ -1,2 +1,6 @@
 # Ignore the `build/` directory in the package root.
 /build
+__pycache__/
+*.pyc
+*.log
+.env
