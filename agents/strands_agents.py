@@ -3,9 +3,15 @@ import re
 import logging
 import sys
 from strands import Agent, tool
-from strands_tools.browser import LocalChromiumBrowser
-from strands_tools.browser.browser import Browser
 from core.a2a_protocol import A2AAgent
+
+try:
+    from strands_tools.browser import LocalChromiumBrowser
+    from strands_tools.browser.browser import Browser
+    BROWSER_AVAILABLE = True
+except ImportError:
+    BROWSER_AVAILABLE = False
+    print("Playwright not installed — Strands agent running in LLM-only mode")
 
 logger = logging.getLogger(__name__)
 
@@ -48,16 +54,18 @@ class ModelConfig:
 
 
 # --- Configure model here ---
-model = ModelConfig.openai(model_id="gpt-4.1-mini")
+model = ModelConfig.bedrock(model_id="us.anthropic.claude-sonnet-4-6", region="us-west-2")
 
 # --- Browser tool (headless Chromium with logging) ---
-_browser_instance = LocalChromiumBrowser(launch_options={"headless": True})
+_browser_instance = None
+if BROWSER_AVAILABLE:
+    _browser_instance = LocalChromiumBrowser(launch_options={"headless": True})
 
-# Get the DecoratedFunctionTool from the Browser base class
-_browser_tool_obj = Browser.__dict__["browser"]
+    # Get the DecoratedFunctionTool from the Browser base class
+    _browser_tool_obj = Browser.__dict__["browser"]
 
-# Monkey-patch the tool's invoke function to emit logs before each call
-_original_tool_func = _browser_tool_obj._tool_func
+    # Monkey-patch the tool's invoke function to emit logs before each call
+    _original_tool_func = _browser_tool_obj._tool_func
 
 _MAX_TEXT_CHARS = 16000  # ~4K tokens — enough for price extraction from search results
 
@@ -115,7 +123,8 @@ def _logging_browser_func(self_or_input, browser_input=None):
 
     return result
 
-_browser_tool_obj._tool_func = _logging_browser_func
+if BROWSER_AVAILABLE:
+    _browser_tool_obj._tool_func = _logging_browser_func
 
 
 @tool
@@ -154,7 +163,7 @@ Steps (follow in order):
    - One PRODUCT line per product found (up to 3): PRODUCT: eBay | $<price> | <url>
    - Compare the listed price to the prices you found. If the listed price is equal or lower, say BUY. If higher, say NOT BUY.
    - Your verdict: BUY or NOT BUY with a one-sentence reason.""",
-    tools=[evaluate_price, _browser_instance.browser],
+    tools=[evaluate_price] + ([_browser_instance.browser] if BROWSER_AVAILABLE else []),
     callback_handler=None,
 )
 
