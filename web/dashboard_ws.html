@@ -48,38 +48,22 @@
 
     <div class="form-group">
         <label>Item Name:</label>
-        <input type="text" id="itemName" value="Laptop">
+        <input type="text" id="itemName" value="Shoes">
     </div>
 
     <div class="form-group">
         <label>Price ($):</label>
-        <input type="number" id="price" value="80">
+        <input type="number" id="price" value="180">
     </div>
 
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
         <div class="form-group">
-            <label>Product Name:</label>
-            <input type="text" id="productName" value="XPS 15 9530" placeholder="e.g. XPS 15 9530, MacBook Pro 14">
-        </div>
-        <div class="form-group">
             <label>Model:</label>
-            <input type="text" id="model" value="9530" placeholder="e.g. 9530, MK183LL/A">
+            <input type="text" id="model" value="Jordan 11" placeholder="e.g. Jordan 11, Air Max 90">
         </div>
         <div class="form-group">
-            <label>Brand:</label>
-            <input type="text" id="brand" value="Dell" placeholder="e.g. Dell, Apple, Lenovo">
-        </div>
-        <div class="form-group">
-            <label>CPU:</label>
-            <input type="text" id="cpu" value="Intel i7-13700H" placeholder="e.g. Intel i7-13700H">
-        </div>
-        <div class="form-group">
-            <label>Memory (GB):</label>
-            <input type="number" id="memory" value="16" placeholder="e.g. 16">
-        </div>
-        <div class="form-group">
-            <label>Graphics Card:</label>
-            <input type="text" id="graphicsCard" value="NVIDIA RTX 4060" placeholder="e.g. NVIDIA RTX 4060">
+            <label>Color:</label>
+            <input type="text" id="color" value="Red" placeholder="e.g. Red, Black, White">
         </div>
     </div>
 
@@ -233,12 +217,8 @@
             ws.send(JSON.stringify({
                 name: itemName,
                 price: price,
-                product_name: document.getElementById('productName').value,
                 model: document.getElementById('model').value,
-                brand: document.getElementById('brand').value,
-                cpu: document.getElementById('cpu').value,
-                memory: parseInt(document.getElementById('memory').value) || 0,
-                graphics_card: document.getElementById('graphicsCard').value
+                color: document.getElementById('color').value
             }));
         };
 

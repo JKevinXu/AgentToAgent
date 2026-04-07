@@ -14,8 +14,8 @@ seller = A2AAgent(
 def handle_get_listings(params):
     return {
         "listings": [
-            {"id": "item_0", "name": "Laptop", "price": 80},
-            {"id": "item_1", "name": "Phone", "price": 50}
+            {"id": "item_0", "name": "Shoes", "price": 180, "model": "Jordan 11", "color": "Red"},
+            {"id": "item_1", "name": "Shoes", "price": 120, "model": "Air Max 90", "color": "Black"}
         ]
     }
 
@@ -27,7 +27,7 @@ def handle_request_evaluation(params):
     from datetime import datetime
     price = params.get("price", 0)
     name = params.get("name", "Item")
-    specs = {k: params[k] for k in ("product_name", "model", "brand", "cpu", "memory", "graphics_card") if params.get(k)}
+    specs = {k: params[k] for k in ("model", "color") if params.get(k)}
 
     # Define buyers
     buyers = [
@@ -77,7 +77,7 @@ def handle_request_evaluation_stream(params):
     import queue
     price = params.get("price", 0)
     name = params.get("name", "Item")
-    specs = {k: params[k] for k in ("product_name", "model", "brand", "cpu", "memory", "graphics_card") if params.get(k)}
+    specs = {k: params[k] for k in ("model", "color") if params.get(k)}
 
     # Seller started
     yield {
@@ -174,7 +174,7 @@ buyer = A2AAgent(
 def handle_evaluate(params):
     price = params.get("price", 0)
     name = params.get("name", "Item")
-    specs = {k: params[k] for k in ("product_name", "model", "brand", "cpu", "memory", "graphics_card") if params.get(k)}
+    specs = {k: params[k] for k in ("model", "color") if params.get(k)}
     spec_summary = ", ".join(f"{k}: {v}" for k, v in specs.items()) if specs else ""
 
     reason = f"Listed at ${price} for {name}"
@@ -194,7 +194,7 @@ buyer2 = A2AAgent(
 def handle_evaluate2(params):
     price = params.get("price", 0)
     name = params.get("name", "Item")
-    specs = {k: params[k] for k in ("product_name", "model", "brand", "cpu", "memory", "graphics_card") if params.get(k)}
+    specs = {k: params[k] for k in ("model", "color") if params.get(k)}
     spec_summary = ", ".join(f"{k}: {v}" for k, v in specs.items()) if specs else ""
 
     reason = f"Listed at ${price} for {name}"

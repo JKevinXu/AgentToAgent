@@ -33,9 +33,9 @@ browser_buyer = A2AAgent(
 def search_web(params):
     """Browser search for product prices"""
     item_name = params.get("name", "")
-    brand = params.get("brand", "")
-    product_name = params.get("product_name", "")
-    search_query = " ".join(filter(None, [brand, product_name, item_name]))
+    model = params.get("model", "")
+    color = params.get("color", "")
+    search_query = " ".join(filter(None, [model, color, item_name]))
     log(f"[browser_buyer] Searching web for: {search_query}")
 
     if USE_REAL:

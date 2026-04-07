@@ -59,7 +59,7 @@ _browser_tool_obj = Browser.__dict__["browser"]
 # Monkey-patch the tool's invoke function to emit logs before each call
 _original_tool_func = _browser_tool_obj._tool_func
 
-_MAX_TEXT_CHARS = 8000  # ~2K tokens — enough for price extraction, avoids 400K blowup
+_MAX_TEXT_CHARS = 16000  # ~4K tokens — enough for price extraction from search results
 
 def _logging_browser_func(self_or_input, browser_input=None):
     """Wrapper that logs each browser action, then delegates to the real tool."""
@@ -141,17 +141,17 @@ buyer_agent = Agent(
 You want to find the best deal. If the listed price is lower than what you find online, that's a great deal — BUY it.
 Do NOT question whether a low price is "legitimate" or "too good to be true." You are simply comparing prices.
 
-You will receive a listing with a product name, price, and detailed specs (brand, model, CPU, memory, graphics card).
-Use ALL the spec details to build a specific search query — not just the generic item name.
+You will receive a listing with a product name, price, model, and color.
+Use the model and color to build a specific search query — e.g. "Jordan 11 Red".
 
 Steps (follow in order):
 1. Call browser: init_session, session_name "price-check", description "Price research"
-2. Call browser: navigate to Amazon search using the brand, product name, and model — e.g. "https://www.amazon.com/s?k=Dell+XPS+15+9530+i7+16GB"
-3. Call browser: get_text, selector "body" — scan for prices
+2. Call browser: navigate to eBay search — e.g. "https://www.ebay.com/sch/i.html?_nkw=Jordan+11+Red"
+3. Call browser: get_text, selector "body" — extract product names and prices from the search results
 4. Call browser: close session
 5. Call evaluate_price with the item name and listed price
 6. Reply with:
-   - One PRODUCT line per competitor found: PRODUCT: Amazon | $<price> | <url>
+   - One PRODUCT line per product found (up to 3): PRODUCT: eBay | $<price> | <url>
    - Compare the listed price to the prices you found. If the listed price is equal or lower, say BUY. If higher, say NOT BUY.
    - Your verdict: BUY or NOT BUY with a one-sentence reason.""",
     tools=[evaluate_price, _browser_instance.browser],
@@ -170,7 +170,7 @@ def handle_strands_evaluate(params):
     """A2A handler that uses Strands buyer agent with LLM + browser"""
     name = params.get("name", "Item")
     price = params.get("price", 0)
-    specs = {k: params[k] for k in ("product_name", "model", "brand", "cpu", "memory", "graphics_card") if params.get(k)}
+    specs = {k: params[k] for k in ("model", "color") if params.get(k)}
 
     spec_text = ""
     if specs:
@@ -178,11 +178,11 @@ def handle_strands_evaluate(params):
         spec_text = "\nSpecs:\n" + "\n".join(spec_lines)
 
     # Build a specific search-friendly description
-    search_parts = [specs.get("brand", ""), specs.get("product_name", ""), name]
+    search_parts = [specs.get("model", ""), specs.get("color", ""), name]
     search_label = " ".join(filter(None, dict.fromkeys(search_parts)))  # deduplicate, preserve order
 
     try:
-        prompt = f"Evaluate this listing: {search_label} at ${price}.{spec_text}\nSearch for this exact product using the brand, model, and specs above. Should we buy it?"
+        prompt = f"Evaluate this listing: {search_label} at ${price}.{spec_text}\nSearch for this exact product using the model and color above. Should we buy it?"
         result = buyer_agent(prompt)
         response_text = str(result)
 
